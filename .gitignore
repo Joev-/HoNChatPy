@@ -1,2 +1,5 @@
 #ignore pythons compiled files
 *.pyc
+
+#ignore the log file :D
+honchat_log
