@@ -21,7 +21,10 @@ def sigint_handler(signum,  frame):
     sys.exit(0)
 
 def main():
-	log.notice("Hello World")
+	# conn = Connection()
+	# conn.connect() # Opens a connection socket?
+	# conn.deserialize() # Sets up all of the structures using the info from the login
+	# ???
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
