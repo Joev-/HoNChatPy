@@ -13,7 +13,7 @@ import sys
 import time
 import signal
 
-from api import *
+from core import *
 
 def sigint_handler(signum,  frame):
     """Handles SIGINT signal (<C-c>). Quits program."""
@@ -21,13 +21,13 @@ def sigint_handler(signum,  frame):
     sys.exit(0)
 
 def main():
+	""" Create a connection and connect, then push to handling everything? """
 	# conn = Connection()
 	# conn.connect() # Opens a connection socket?
-	# conn.deserialize() # Sets up all of the structures using the info from the login
-	# ???
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
+	
 	# If settings were stored in variables use:
 	#log.addLog(sys.stdout, STDOUT_LOGLEVEL, STDOUT_VERBOSE)
 	log.addLogger(sys.stdout, 'DEBUG', False, False)

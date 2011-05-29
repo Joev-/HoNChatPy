@@ -1,4 +1,6 @@
-""" Deserializes the php stuff and creates objects """
+""" Deserialises the php stuff and creates objects """
 
-def deserialize():
+def deserialise():
 	""" Stuff """
+
+def 

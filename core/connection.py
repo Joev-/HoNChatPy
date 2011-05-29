@@ -1,5 +1,3 @@
-import requester
-
 """ Connection Object """
 
 class Connection:
@@ -11,6 +9,10 @@ class Connection:
 	def connect(user, password):
 		""" Opens a connection to HoN """
 		result = requester.auth(user, password)
+
+		# Push the result through the deserialiser
+		if result != None:
+			result.deserialise()
 		
 		self.cookie = datCookie
 		self.connected = True
@@ -18,6 +20,4 @@ class Connection:
 	def close():
 		""" Closes a connection """
 
-	def hash(password):
-		""" Hashes a password to MD5 """
-		return hashlib.md5(password).hexdigest()
+	
