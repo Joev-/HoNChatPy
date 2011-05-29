@@ -1,1 +1,32 @@
-Asss. Asss everywhere.
+TODO:
+
+Connection object/class
+	- Keeps client connected to server
+	- Receives packets?
+
+Requester:
+	- Sends requests to server
+
+Parser/deserializer:
+	- Creates structures from the login info
+		- Buddies
+		- Ignores
+		- Banlists
+		- Self?
+		- Clan?
+
+Buddy object? :
+	- Online status
+	- Stats
+	- Account info:
+		- id, clan, nick, etc
+
+Chatting:
+	- Chat channels
+	- IM
+	- Whispers
+	- Game info
+
+Notifications
+
+GUI
