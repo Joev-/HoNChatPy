@@ -1,3 +1,7 @@
+import hashlib
+import urllib2
+import log 
+
 """ Sends requests to the HoN master servers """
 
 HONVERSION = "2.0.31.0" # Put this somewhere else and clean it. Maybe make it local and double as an updater.
@@ -9,12 +13,12 @@ def hash(password):
 		return hashlib.md5(password).hexdigest()
 
 def httpget(url):
-	self.url = masterServer + url
+	url = masterServer + url
 	try:
 		req = urllib2.Request(url, None, header)
 		response = urllib2.urlopen(req)
-		return response
-	except Exception e:
+		return response.read()
+	except Exception, e:
 		log.error(e)
 		return None
 

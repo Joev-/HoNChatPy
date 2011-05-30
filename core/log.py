@@ -61,7 +61,7 @@ def doLog(loglevel, message):
 	lightMessage = "[%s] %8s: %s\n" % (currentTime, loglevel, message)
 	verboseMessage = "[%s] %8s: %20s(): %s\n" % (currentTime, loglevel, function, message)
 	for (file, level, verbose) in logfiles:
-		if _levels[loglevel] <= levels[level]:
+		if levels[loglevel] <= levels[level]:
 			if verbose:
 				file.write(verboseMessage)
 			else:
