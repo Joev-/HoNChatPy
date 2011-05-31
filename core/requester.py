@@ -2,7 +2,10 @@ import hashlib
 import urllib2
 import log 
 
-""" Sends requests to the HoN master servers """
+""" 
+Sends requests to the HoN master servers.
+These are just basic HTTP get requests which return serialised php.
+"""
 
 HONVERSION = "2.0.31.0" # Put this somewhere else and clean it. Maybe make it local and double as an updater.
 masterServer = "http://masterserver.hon.s2games.com/"

@@ -15,6 +15,11 @@ import signal
 
 from core import *
 
+cookie = None
+ip = None
+auth = None
+chatserv = None
+
 def sigint_handler(signum,  frame):
     """Handles SIGINT signal (<C-c>). Quits program."""
     log.notice("Quitting..")
@@ -24,10 +29,18 @@ def main():
 	usr = raw_input("Username: ")
 	passw = raw_input("Password: ")
 	log.info("Connecting...")
-	
-	# Create a connection and connect, then push to handling everything in an infinate loop?
+
+	# Request an initial connection
 	conn = Connection()
-	conn.connect(usr, passw)
+	result = conn.connect(usr, passw)
+	if result == True:
+		# Got the user info, so try connecting to the chat server now.
+		socket = conn.socket()
+		# pass
+		# Get initial connection stuff here and go into a loop.
+		# while conn.connected == True:
+
+
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
