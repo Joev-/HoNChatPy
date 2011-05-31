@@ -39,11 +39,13 @@ class Connection:
 		global connection
 		result = requester.auth(user, password)
 
-		# Push the result through the deserialiser
+		log.notice(result)
+
 		if result == None:
 			log.error("Could not connect to Heroes of Newerth")
 			return False
 
+		# Push the result through the deserialiser
 		data = deserialise(result)
 		
 		# self.user.nick = data[1]

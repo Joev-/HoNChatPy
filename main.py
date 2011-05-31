@@ -24,8 +24,8 @@ def main():
 	usr = raw_input("Username: ")
 	passw = raw_input("Password: ")
 	log.info("Connecting...")
+	
 	# Create a connection and connect, then push to handling everything in an infinate loop?
-
 	conn = Connection()
 	conn.connect(usr, passw)
 
