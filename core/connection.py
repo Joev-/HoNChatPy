@@ -58,7 +58,6 @@ class Connection:
 		self.getBasicData(data)
 		self.getUserData(data)
 
-		log.debug(self.cookie + " "  + self.ip + " " + self.auth + " " + self.chatserv)
 		return True
 	
 	def socket(self):
@@ -66,8 +65,8 @@ class Connection:
 		self.socket.connect((self.chatserv, CHAT_PORT))
 
 		# Send the initial login packet
-		log.debug("Greeting the login with " + self.cookie + " - " + self.ip + " - " + self.user['auth'])
-		tcp.greet(self.socket, self.cookie, self.ip, self.user['auth'])
+		log.debug("Greeting the login")
+		tcp.greet(self.socket, self.user['superid'], self.cookie, self.ip, self.user['auth'])
 
 		self.connected = True
 		return self.socket

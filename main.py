@@ -40,7 +40,19 @@ def main():
 		socket = conn.socket()
 		# pass
 		# Get initial connection stuff here and go into a loop.
-		# while conn.connected == True:
+		while conn.connect == True:
+			packet = socket.recv(1024)
+			
+			if len(packet) == 0:
+				 continue
+			
+			log.debug("Packet length is : " + str(len(packet)))
+			r = Struct("basic",
+	                    ULInt32("size"),
+	                    Byte("function"))
+	        logging.debug(packet)
+	        data = r.parse(packet)
+	        logging.debug(data)
 
 
 
