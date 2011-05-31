@@ -1,4 +1,4 @@
-import phpserialize as phpd
+from lib import phpserialize as phpd
 
 """ Deserialises the php stuff and creates objects, not really... big... since there's this like, library... """
 
