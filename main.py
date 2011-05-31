@@ -12,6 +12,7 @@
 import sys
 import time
 import signal
+import getpass
 
 from core import *
 
@@ -27,7 +28,8 @@ def sigint_handler(signum,  frame):
 
 def main():
 	usr = raw_input("Username: ")
-	passw = raw_input("Password: ")
+	#passw = raw_input("Password: ")
+        passw = getpass.getpass()         
 	log.info("Connecting...")
 
 	# Request an initial connection
