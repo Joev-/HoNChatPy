@@ -163,7 +163,7 @@ def greet(socket, aid, cookie, ip, auth):
 	# Something went wrong...
 	return 0
 
-""" Client to server methods """
+""" Client to server """
 def sendPong(socket):
 	""" Replies to a ping request (0x2A00) with a pong response (0x2A01) """
 	c = Struct("pong", ULInt16("packetid"))
@@ -173,7 +173,7 @@ def sendPong(socket):
 	log.debug(">> 0x%x" % c.parse(req).packetid)
 
 
-""" Server to Client methods """
+""" Server to Client """
 def parseTotalOnline(socket, packet):
 	""" Gets the number of players online """
 

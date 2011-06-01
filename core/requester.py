@@ -24,9 +24,7 @@ def httpget(url):
 		log.error(e.code)
 		log.error(e.read())
 		return None
-	except urllib2.URLError, e:
-		log.error(e)
-		return None
+
 	
 	return response.read()
 
@@ -37,6 +35,7 @@ def httpost(url):
 # The available requests
 
 def auth(username, password):
+	""" Requests basic information about the user's account """
 	url = "client_requester.php?f=auth&login=%s&password=%s" % (username, hash(password))
 
 	resp = httpget(url)

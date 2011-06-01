@@ -40,21 +40,37 @@ class Connection:
 	def connect(self, user, password):
 		""" Requests the user data and opens a socket using it."""
 
-		log.notice("Getting account information...")
-		response = requester.auth(user, password)
+		log.notice("Getting authentication data...")
+		tries = 0
+		try:
+			response = requester.auth(user, password)
+		except:
+			if tries == 3:
+				log.critical("Failed to connect, something's wrong!")
+				return False
+			timeout = pow(2, tries)
+			log.notice("Connection error, retrying in %i " % timeout)
+			time.sleep(timeout)
+			tries += 1
+		
 		if response == None:
-			log.error("Could not connect to Heroes of Newerth")
+			log.error("Could not connect to Heroes of Newerth.")
 			self.connected = False
 			return False
 		elif response == "":
-			log.error("Could not obtain user information")
+			log.error("Could not obtain user information.")
 			self.connected = False
 			return False
+
 		# Add handling for invalid username/password here too. Will need to parse the response and check for "invalid details"
 		
 		# Push the result through the deserialiser
 		data = deserialise(response)
 
+		if 'auth' in data:
+			log.error("Incorrect username/password")
+			return False
+		
 		self.getBasicData(data)
 		self.getAccountData(data)
 
