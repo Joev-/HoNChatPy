@@ -43,16 +43,18 @@ class Connection:
 
 		log.notice("Getting authentication data...")
 		tries = 0
-		try:
-			response = requester.auth(user, password)
-		except:
-			if tries == 3:
-				log.critical("Failed to connect, something's wrong!")
-				return False
-			timeout = pow(2, tries)
-			log.notice("Connection error, retrying in %i " % timeout)
-			time.sleep(timeout)
-			tries += 1
+		while True:
+			try:
+				response = requester.auth(user, password)
+				break
+			except:
+				if tries == 3:
+					log.critical("Failed to connect, something's wrong!")
+					return False
+				timeout = pow(2, tries)
+				log.notice("Connection error, retrying in %i " % timeout)
+				time.sleep(timeout)
+				tries += 1
 		
 		if response == None:
 			log.error("Could not connect to Heroes of Newerth.")
