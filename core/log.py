@@ -22,7 +22,7 @@ levels = {
     'DEBUG' : 7,
 }
 
-def addLogger(file, level, verbose = False, timestamp = False):
+def addLogger(file, level, verbose = False):
 	global levels
 	global logfiles
 	if level == None:

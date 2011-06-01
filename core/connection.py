@@ -35,12 +35,12 @@ class Connection:
 		self.ip = None
 		self.auth = None
 		self.chatserv = None
-		self.user = {}
+		self.account = {}
 
 	def connect(self, user, password):
 		""" Requests the user data and opens a socket using it."""
-		log.notice("Opening a connection")
 
+		log.notice("Getting account information...")
 		response = requester.auth(user, password)
 		if response == None:
 			log.error("Could not connect to Heroes of Newerth")
@@ -50,13 +50,13 @@ class Connection:
 			log.error("Could not obtain user information")
 			self.connected = False
 			return False
-		# Add handling for invalid username/password here too.
+		# Add handling for invalid username/password here too. Will need to parse the response and check for "invalid details"
 		
 		# Push the result through the deserialiser
 		data = deserialise(response)
 
 		self.getBasicData(data)
-		self.getUserData(data)
+		self.getAccountData(data)
 
 		return True
 	
@@ -66,9 +66,13 @@ class Connection:
 
 		# Send the initial login packet
 		log.debug("Greeting the login")
-		tcp.greet(self.socket, self.user['superid'], self.cookie, self.ip, self.user['auth'])
-
-		self.connected = True
+		if tcp.greet(self.socket, self.account['superid'], self.cookie, self.ip, self.account['auth']) == 1:
+			self.connected = True
+			log.notice("Connection successfull")
+		else:
+			self.connected = False
+			log.notice("Connection failed, is the chat protocol correct?")
+		
 		return self.socket
 
 	def close(self):
@@ -82,7 +86,7 @@ class Connection:
 		self.socket.close()
 		self.socket = None
 
-		self.user = {}
+		self.account = {}
 	
 	def getBasicData(self, data):
 		self.cookie = data['cookie']
@@ -90,8 +94,8 @@ class Connection:
 		self.auth = data['auth_hash']
 		self.chatserv = data['chat_url']
 	
-	def getUserData(self, data):
-		self.user['nickname'] = data['nickname']
-		self.user['superid'] = int(data['super_id'])
-		self.user['auth'] = data['auth_hash']
+	def getAccountData(self, data):
+		self.account['nickname'] = data['nickname']
+		self.account['superid'] = int(data['super_id'])
+		self.account['auth'] = data['auth_hash']
 

@@ -7,7 +7,7 @@ Sends requests to the HoN master servers.
 These are just basic HTTP get requests which return serialised php.
 """
 
-HONVERSION = "2.0.31.0" # Put this somewhere else and clean it. Maybe make it local and double as an updater.
+HONVERSION = "2.0.32.0" # Put this somewhere else and clean it. Maybe make it local and double as an updater.
 masterServer = "http://masterserver.hon.s2games.com/"
 header = { 'User-Agent' : "S2 Games/Heroes of Newerth/" + HONVERSION + "/lac/x86-biarch" }
 
@@ -17,13 +17,18 @@ def hash(password):
 
 def httpget(url):
 	url = masterServer + url
+	req = urllib2.Request(url, None, header)
 	try:
-		req = urllib2.Request(url, None, header)
 		response = urllib2.urlopen(req)
-		return response.read()
-	except Exception, e:
+	except urllib2.HTTPError, e:
+		log.error(e.code)
+		log.error(e.read())
+		return None
+	except urllib2.URLError, e:
 		log.error(e)
 		return None
+	
+	return response.read()
 
 def httpost(url):
 	""" When should POST be used VS GET?"""
@@ -33,7 +38,14 @@ def httpost(url):
 
 def auth(username, password):
 	url = "client_requester.php?f=auth&login=%s&password=%s" % (username, hash(password))
-	return httpget(url)
+
+	resp = httpget(url)
+
+	if resp == 104:
+		log.error("Connection reset by peer, trying again")
+		resp = httpget(url)
+
+	return resp
 
 def serverList(cookie, gametype):
 	pass

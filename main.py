@@ -38,29 +38,18 @@ def main():
 	if result == True:
 		# Got the user info, so try connecting to the chat server now.
 		socket = conn.socket()
-		# pass
-		# Get initial connection stuff here and go into a loop.
-		while conn.connect == True:
+
+		# Infinate loop, receive packets and process them.
+		while conn.connected == True:
 			packet = socket.recv(1024)
-			
-			if len(packet) == 0:
-				 continue
-			
-			log.debug("Packet length is : " + str(len(packet)))
-			r = Struct("basic",
-	                    ULInt32("size"),
-	                    Byte("function"))
-	        logging.debug(packet)
-	        data = r.parse(packet)
-	        logging.debug(data)
-
-
+			# log.debug("Packet length is : " + str(len(packet)))
+			tcp.shitParsePacket(socket, packet)
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
 	
 	# If settings were stored in variables use:
 	#log.addLog(sys.stdout, STDOUT_LOGLEVEL, STDOUT_VERBOSE)
-	log.addLogger(sys.stdout, 'DEBUG', False, False)
-	log.addLogger('honchat_log', 'DEBUG', True, True)
+	log.addLogger(sys.stdout, 'DEBUG', False)
+	log.addLogger('honchat_log', 'DEBUG', True)
 	main()

@@ -5,6 +5,8 @@ from lib import phpserialize as phpd
 def deserialise(raw):
 	clean = phpd.loads(raw)
 	
+	# TODO: Error and response checking
+	
 	return clean
 
 def getBasicInfo(data):
