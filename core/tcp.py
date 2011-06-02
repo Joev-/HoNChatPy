@@ -15,8 +15,8 @@ Client -> Server packets.
 		+ String: ip - Pad and +1 the len
 		+ String: authHash - Pad and +1 the len
 		+ ULInt32: proto - Chat protocol version
-		+ ULInt32: unknown - No idea, Normal hon client uses 0x01, HoNPurple uses 0x05, HoNChatPlus doesn't use anything, it has a weird way of doing it.
-		+ ULInt8: unknown - No idea, empty padding I guess... Could be merged with the protocol i.e. 0x0D 0x00 0x00 0x00 0x01 0x00 0x00 0x00 0x00
+		+ ULInt8: unknown - No idea, Normal hon client uses 0x01, HoNPurple uses 0x05
+		+ ULInt32: invisible - Sets if the user is invisible or not, invisible is 0x03, normal is 0x00. Will need handling later.
 	
 	+ 0x02  - Pong, response to ping.
 
@@ -115,16 +115,23 @@ def shitParsePacket(socket, packet):
 	log.debug("<< 0x%x - Len: %d" % (data.packetid, len(packet)))
 	if data.packetid == 0x2A00:
 		sendPong(socket)
+	elif data.packetid == 0x0B:
+		parseInitialStatuses(packet)
 	elif data.packetid == 0x68:
-		parseTotalOnline(socket, packet)
+		parseTotalOnline(packet)
 
-def greet(socket, aid, cookie, ip, auth):
+def greet(socket, aid, cookie, ip, auth, invis = False):
 	""" Sends the initial login request to the chat server, sends the account id, cookie, ip, auth hash and chat protocol version.
 		
 		Server responds with a response (0x1C00) to acknlowdge the login and also the intial data (0x0B)
 
-	 """
-
+	"""
+	# Invisible mode flag.
+	if invis == True:
+		mode = 0x03
+	else:
+		mode = 0x00
+	
 	# Build the packet
 	c = Struct("login",
 			ULInt16("id"), # 0x0C00
@@ -133,19 +140,18 @@ def greet(socket, aid, cookie, ip, auth):
 			String("ip", len(ip)+1, encoding="utf8", padchar = "\x00"),
 			String("auth", len(auth)+1, encoding="utf8", padchar = "\x00"),
 			ULInt32("proto"), # Protocol version?
-			ULInt32("nan"), # Unknown also, 5? HoN uses 0x01, HonPurple uses 0x05.. Honchatplus uses...?
-			ULInt8("unknown") # no idea?
+			ULInt8("unknown"), # Unknown also, 5? HoN uses 0x01, HonPurple uses 0x05..
+			ULInt32("mode") # Invisible or normal.
 		)
 
 	req = c.build(Container(id=0x0C00, aid=aid+0x00, cookie=unicode(cookie), ip=unicode(ip), auth=unicode(auth), 
-							proto=0x0D, nan=0x05, unknown=0x00))
+							proto=0x0D, unknown=0x01, mode=mode))
 	b = socket.send(req)
 
 	log.notice("Authenticating...")
 
-	""" Check that the server sends the ack response (0x0200 0x1C00). If it does, then all is good to go
-		and packets will be sent and received nicely, otherwise the log in failed and 
-		something is wrong. """
+	""" Check that the server sends the ack response (0x0200 0x1C00). If it does, then all is good,
+		 otherwise the log in failed and something is wrong. """
 
 	resp = socket.recv(1024)
 	if len(resp) is None or 0:
@@ -161,6 +167,7 @@ def greet(socket, aid, cookie, ip, auth):
 		return 1
 
 	# Something went wrong...
+	log.error("Server did not respond correctly. Did something change?")
 	return 0
 
 """ Client to server """
@@ -174,20 +181,24 @@ def sendPong(socket):
 
 
 """ Server to Client """
-def parseTotalOnline(socket, packet):
+def parseTotalOnline(packet):
 	""" Gets the number of players online """
 
 	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), ULInt32("count"), CString("unknown"))
 	r = c.parse(packet)
 	log.notice(str(r.count) + " players online.")
 
-def parseInitialStatuses(socket, packet):
-	""" Initial status packet contains the following
-			+ Channels
-			+ ...
-	"""
-	pass
+def parseInitialStatuses(packet):
+	""" Parses the initial status packet sent. """
+	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), 
+			ULInt32("buddycount"),
+			ULInt32("buddyid"),
+			Byte("status"),
+			Byte("flag"),
+			CString("data"))
+	r = c.parse(packet)
+	log.debug(r)
 
-def parseStatusUpdate(socket, packet):
+def parseStatusUpdate(packet):
 	""" Status updates contain...? """
 	pass

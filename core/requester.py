@@ -37,14 +37,12 @@ def httpost(url):
 def auth(username, password):
 	""" Requests basic information about the user's account """
 	url = "client_requester.php?f=auth&login=%s&password=%s" % (username, hash(password))
+	return httpget(url)
 
-	resp = httpget(url)
-
-	if resp == 104:
-		log.error("Connection reset by peer, trying again")
-		resp = httpget(url)
-
-	return resp
+def logout(cookie):
+	""" Sends a logout 'request'(?) """
+	url = "client_requester.php?f=logout&cookie=%s" % cookie 
+	return httpget(url)
 
 def serverList(cookie, gametype):
 	pass

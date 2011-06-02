@@ -85,7 +85,7 @@ class Connection:
 
 		# Send the initial login packet
 		log.debug("Greeting the login")
-		if tcp.greet(self.socket, self.account['superid'], self.cookie, self.ip, self.account['auth']) == 1:
+		if tcp.greet(self.socket, self.account['superid'], self.cookie, self.ip, self.account['auth'], True) == 1:
 			self.connected = True
 			log.notice("Connection successfull")
 		else:
