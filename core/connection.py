@@ -27,6 +27,7 @@ The connection holds
 	Chat server port is 11031. Does it change?
 """
 CHAT_PORT = 11031
+INVIS = False # TODO: Move somewhere.
 
 class Connection:
 
@@ -43,6 +44,7 @@ class Connection:
 
 		log.notice("Getting authentication data...")
 		tries = 0
+		# Funny thing, while in this loop, if one presses C-c, it only breaks the loop and not the entire program.
 		while True:
 			try:
 				response = requester.auth(user, password)
@@ -85,7 +87,7 @@ class Connection:
 
 		# Send the initial login packet
 		log.debug("Greeting the login")
-		if tcp.greet(self.socket, self.account['superid'], self.cookie, self.ip, self.account['auth'], True) == 1:
+		if tcp.greet(self.socket, self.account['superid'], self.cookie, self.ip, self.account['auth'], INVIS) == 1:
 			self.connected = True
 			log.notice("Connection successfull")
 		else:

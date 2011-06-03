@@ -29,7 +29,8 @@ Server -> Client packets
 	+ 0x0B - Initial status, sent after 0x1C00. Contains initial data, channels, players online? amongst other stuff.
 		+ ULInt16: size
 		+ ULInt16: packetid
-		+ ????
+		+ ULInt32: buddycount - Number of buddies online.
+			+ ULInt32
 
 	+ 0x0C - Status update... Friends joining/leaving games, etc?
 		+ ULInt16: size
@@ -117,6 +118,8 @@ def shitParsePacket(socket, packet):
 		sendPong(socket)
 	elif data.packetid == 0x0B:
 		parseInitialStatuses(packet)
+	elif data.packetid == 0x08:
+		parseWhisper(packet)
 	elif data.packetid == 0x68:
 		parseTotalOnline(packet)
 
@@ -173,11 +176,8 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 """ Client to server """
 def sendPong(socket):
 	""" Replies to a ping request (0x2A00) with a pong response (0x2A01) """
-	c = Struct("pong", ULInt16("packetid"))
-	req = c.build(Container(packetid=0x2A01))
-
-	socket.send(req)
-	log.debug(">> 0x%x" % c.parse(req).packetid)
+	socket.send(struct.pack('h', 0x2A01))
+	log.debug(">> Pong")
 
 
 """ Server to Client """
@@ -189,16 +189,36 @@ def parseTotalOnline(packet):
 	log.notice(str(r.count) + " players online.")
 
 def parseInitialStatuses(packet):
-	""" Parses the initial status packet sent. """
-	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), 
-			ULInt32("buddycount"),
-			ULInt32("buddyid"),
-			Byte("status"),
-			Byte("flag"),
-			CString("data"))
-	r = c.parse(packet)
-	log.debug(r)
+	""" Parses the initial status packet sent. 
+		Sets up most of the UI as in, showing buddy statuses, 
+		joining channels, diplaying account icons and what not.
+	"""
+
+	buddycount = int(struct.unpack_from('B', packet[4:8])[0]) # Tuples?!!
+	buddy_data = packet[8:]
+	if buddycount > 0:
+		i = 1
+		log.debug("Parsing buddy data for %i buddies." % buddycount)
+		while i <= int(buddycount):
+			status = int(struct.unpack_from('B', buddy_data[4])[0]) # What the hell, why was this a tuple pre-int()?
+			if status == 5:
+				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"), CString("server"), CString("gamename"))
+				r = c.parse(buddy_data)
+				buddy_data = buddy_data[6 + (len(br.server)+len(r.gamename)):]
+				log.info(str(br.buddyid) + " is online and in the game " + r.gamename)
+			else:
+				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"))
+				r = c.parse(buddy_data[:8])
+				buddy_data = buddy_data[6:]
+				log.info(str(r.buddyid) + " is online")
+			i = i+1
 
 def parseStatusUpdate(packet):
 	""" Status updates contain...? """
 	pass
+
+def parseWhisper(packet):
+	""" A normal whisper from anyone """
+	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), CString("name"), CString("message"))
+	r = c.parse(packet)
+	log.notice(r.name + ": " + r.message)

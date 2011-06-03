@@ -6,10 +6,13 @@ from user import *
 def deserialise(raw):
 	data = phpd.loads(raw)
 	
-	getBuddies(data)
-	getClanMemebrs(data)
-	getBannedList(data)
-	getIgnoreList(data)
+	if 'auth' in data:
+		return data
+	
+	# getBuddies(data)
+	# getClanMemebrs(data)
+	# getBannedList(data)
+	# getIgnoreList(data)
 
 	info = getBasicInfo(data)
 
@@ -17,11 +20,14 @@ def deserialise(raw):
 
 def getBasicInfo(data):
 	info = {}
-	info['master_srv'] = data['master_srv']
+	info['master_svr'] = data['master_svr']
 	info['ip'] = data['ip']
 	info['chat_url'] = data['chat_url']
 	info['cookie'] = data['cookie']
 	info['auth_hash'] = data['auth_hash']
+	info['nickname'] = data['nickname']
+	info['super_id'] = data['super_id']
+	return info
 
 def getBuddies(data):
 	pass
