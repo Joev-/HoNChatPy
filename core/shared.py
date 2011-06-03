@@ -1,4 +1,7 @@
 """ 
+Functions and information for globally accessable objects, Users, Account, Channels, Buddies/Bans/Ignores. etc.
+----------
+
 Functions and information pertaining to users, including buddies, bans, ignores and other such stuff.
 These are needed as they are global objects which are created when a response is returned from the client requester 
 and will be updated in real time. The response contains a big list of buddies, bans, ignores, and other than watching for
@@ -32,11 +35,28 @@ buddyList = []
 banList = []
 ignoreList = []
 
-
-class User:
+class User(object):
 	pass
 
+class Account(object):
+
+	def __init__(self):
+		pass
 
 
+""" 
+Channel Information
+
+Needs work and more information.
+
+A channel holds the following
+	+ id		~ The id of the channel
+	+ name		~ The name of the channel
+"""
+
+class Channel:
+
+	def __init__(self):
+		pass
 
 		

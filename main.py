@@ -43,7 +43,7 @@ def main():
 		while conn.connected == True:
 			packet = socket.recv(1024)
 			# log.debug("Packet length is : " + str(len(packet)))
-			tcp.shitParsePacket(socket, packet)
+			tcp.parsePacket(socket, packet)
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)

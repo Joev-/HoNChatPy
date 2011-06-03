@@ -63,16 +63,14 @@ Server -> Client packets
 		+ 0x40 - Prepurchased, gold shield? 
 
 	Notes:
-		* When sending a login request, pad the strings with zeros, is this the same for all packets?
-		* When sending a login request, pad the account id with 0x00 once. Why?
+		* All strings are zero terminated (\\x00). Can be grabbed using CString.
 		* Server -> Client packets are always preceded by it's length
 		* Must send a chat protocol version!
 """
 import log
 import struct
 from lib.construct import *
-
-PROTO_VER = 0x0D # Protocol version 13.
+from packet import *
 
 """ Magical packet handlers
 	
@@ -80,48 +78,25 @@ PROTO_VER = 0x0D # Protocol version 13.
 	Then each packet will have it's packet id checked against that list.
 """
 
-class Handler(object):
-	pass
-
-_packetHandlers = []
-
-# Unused, would be nice to have.
-def registerPacketHandler(packetid, function):
-	global _packetHandlers
-	handler = Handler()
-	handler.packetid = packetid
-	handler.function = function
-	if handler not in _packetHandlers:
-		_packetHandlers.append(handler)
-		log.debug("Registered a handler for " + str(packetid) + " " + str(function))
-
-# Unused, would be nice to have.
 def parsePacket(socket, packet):
-	global _packetHandlers
-
-	log.debug("Recieved a packet")
-	r = Struct("response", ULInt16("size"), ULInt16("packetid"))
-	log.debug(r.parse(packet))
-
-	for handler in _packetHandlers:
-		if r.packetid == handler.packetid:
-			handler.function(socket)
-
-def shitParsePacket(socket, packet):
 	if len(packet) == 0:
 		return
 	
 	r = Struct("response", ULInt16("size"), ULInt16("packetid"))
 	data = r.parse(packet)
 	log.debug("<< 0x%x - Len: %d" % (data.packetid, len(packet)))
-	if data.packetid == 0x2A00:
+	if data.packetid == HON_SC_AUTH_ACCEPTED:
 		sendPong(socket)
-	elif data.packetid == 0x0B:
-		parseInitialStatuses(packet)
-	elif data.packetid == 0x08:
+	elif data.packetid == HON_SC_WHISPER:
 		parseWhisper(packet)
-	elif data.packetid == 0x68:
+	elif data.packetid == HON_SC_INITIAL_STATUS:
+		parseInitialStatuses(packet)
+	elif data.packetid == HON_SC_UPDATE_STATUS:
+		parseUserStatusUpdate(packet)
+	elif data.packetid == HON_SC_TOTAL_ONLINE:
 		parseTotalOnline(packet)
+	# else:
+	# 	log.debug("Unknown packet: %x" % data.packetid)
 
 def greet(socket, aid, cookie, ip, auth, invis = False):
 	""" Sends the initial login request to the chat server, sends the account id, cookie, ip, auth hash and chat protocol version.
@@ -147,8 +122,8 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 			ULInt32("mode") # Invisible or normal.
 		)
 
-	req = c.build(Container(id=0x0C00, aid=aid+0x00, cookie=unicode(cookie), ip=unicode(ip), auth=unicode(auth), 
-							proto=0x0D, unknown=0x01, mode=mode))
+	req = c.build(Container(id=HON_CS_AUTH_INFO, aid=aid, cookie=unicode(cookie), ip=unicode(ip), auth=unicode(auth), 
+							proto=HON_PROTOCOL_VERSION, unknown=0x01, mode=mode))
 	b = socket.send(req)
 
 	log.notice("Authenticating...")
@@ -165,7 +140,7 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 	data = r.parse(resp)
 	log.debug("<< 0x%x" % data.packetid)
 
-	if data.packetid == 0x1C00:
+	if data.packetid == HON_SC_AUTH_ACCEPTED:
 		# Success! Logged in!
 		return 1
 
@@ -176,7 +151,7 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 """ Client to server """
 def sendPong(socket):
 	""" Replies to a ping request (0x2A00) with a pong response (0x2A01) """
-	socket.send(struct.pack('h', 0x2A01))
+	socket.send(struct.pack('h', HON_CS_PONG))
 	log.debug(">> Pong")
 
 
@@ -184,14 +159,13 @@ def sendPong(socket):
 def parseTotalOnline(packet):
 	""" Gets the number of players online """
 
-	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), ULInt32("count"), CString("unknown"))
+	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), ULInt32("count"))
 	r = c.parse(packet)
 	log.notice(str(r.count) + " players online.")
 
 def parseInitialStatuses(packet):
 	""" Parses the initial status packet sent. 
-		Sets up most of the UI as in, showing buddy statuses, 
-		joining channels, diplaying account icons and what not.
+		Sets up most of the UI as in, showing buddy statuses, joining channels, diplaying account icons and what not.
 	"""
 
 	buddycount = int(struct.unpack_from('B', packet[4:8])[0]) # Tuples?!!
@@ -213,8 +187,11 @@ def parseInitialStatuses(packet):
 				log.info(str(r.buddyid) + " is online")
 			i = i+1
 
-def parseStatusUpdate(packet):
-	""" Status updates contain...? """
+def parseUserStatusUpdate(packet):
+	""" Parses a user status update, fired when a user joins a game, logs on?, etc. 
+		Updates the buddy statuses on the UI.
+	"""
+
 	pass
 
 def parseWhisper(packet):
