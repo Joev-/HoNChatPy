@@ -10,15 +10,15 @@ My documentation of packets.
 Client -> Server packets.
 
 	+ 0x0C00  - Login request. 101 bytes.
-		+ ULInt16: aid - Account id, pad wit 0x00
-		+ String: cookie - Pad and +1 the len
-		+ String: ip - Pad and +1 the len
-		+ String: authHash - Pad and +1 the len
+		+ ULInt16: aid - Account id
+		+ String: cookie
+		+ String: ip
+		+ String: authHash
 		+ ULInt32: proto - Chat protocol version
 		+ ULInt8: unknown - No idea, Normal hon client uses 0x01, HoNPurple uses 0x05
 		+ ULInt32: invisible - Sets if the user is invisible or not, invisible is 0x03, normal is 0x00. Will need handling later.
 	
-	+ 0x02  - Pong, response to ping.
+	+ 0x02A01  - Pong, response to ping.
 
 Server -> Client packets
 
@@ -30,7 +30,11 @@ Server -> Client packets
 		+ ULInt16: size
 		+ ULInt16: packetid
 		+ ULInt32: buddycount - Number of buddies online.
-			+ ULInt32
+			+ ULInt32: buddyid - ID of buddy, can be matched with response from http auth request.
+			+ Byte: status - Offline, online, in lobby, in game. If in game/lobby then:
+				+ CString: server - IP and port of the game server.
+				+ CString: name - Name of the game.
+		+ There's more stuff, unsure what to do with it, no one else seems to use it..
 
 	+ 0x0C - Status update... Friends joining/leaving games, etc?
 		+ ULInt16: size
@@ -40,26 +44,29 @@ Server -> Client packets
 	+ 0x08 - Whisper. Basic whisper message.
 		+ ULInt16: size
 		+ ULInt16: packetid
-		+ ?String: name?
-		+ ?String: message.?
+		+ CString: name - Name of the person who sent the message, includes clan tag.
+		+ CString: message
 	
 	+ 0x68 - Number of players online. Sent every 30 seconds. Contains 35 Bytes of data.
 		+ ULInt16: size
 		+ ULInt16: packetid
-		+ ???
+		+ ULInt32: count - Number of players online.
+		+ There's other data here, I think it's best to ignore it. Seems like weird region IDs or something.
 
-	:STATES:
+	States:
 	The available states of a user.
-		+ 0x00 - Offline
-			+ 0x03 - Online
-			+ 0x04 - In Lobby
-			+ 0x05 - In Game
+		+ 0x0 - Offline
+		+ 0x3 - Online
+		+ 0x4 - In Lobby
+		+ 0x5 - In Game
 	
-	:FLAGS:
+	Flags:
 	The available accout flags of a user
 		+ 0x00 - None, basic user.
 		+ 0x01 - Moderator
-		+ 0x02 - Founder, S2 Games employee?
+		+ 0x02 - Leader?
+		+ 0x03 - Administrator?
+		+ 0x04  - Staff?
 		+ 0x40 - Prepurchased, gold shield? 
 
 	Notes:
@@ -68,16 +75,32 @@ Server -> Client packets
 		* Must send a chat protocol version!
 """
 import log
-import struct
+import user
 from lib.construct import *
 from packet import *
 
-""" Magical packet handlers
-	
-	Idea is to register each packet handler and put it in the packet handlers list.
-	Then each packet will have it's packet id checked against that list.
-"""
+import struct
 
+""" Some constants """
+HON_FLAGS_NONE			= 0x00
+HON_FLAGS_OFFICER		= 0x01
+HON_FLAGS_LEADER		= 0x02
+HON_FLAGS_ADMINISTRATOR	= 0x03
+HON_FLAGS_STAFF			= 0x04
+HON_FLAGS_PREPURCHASED	= 0x40
+
+HON_STATUS_OFFLINE		= 0
+HON_STATUS_ONLINE		= 3
+HON_STATUS_INLOBBY		= 4
+HON_STATUS_INGAME		= 5
+
+HON_NOTIFICATION_ADDED_AS_BUDDY =	0x01
+HON_NOTIFICATION_BUDDY_ACCEPTED =	0x02
+HON_NOTIFICATION_REMOVED_AS_BUDDY =	0x03
+HON_NOTIFICATION_BUDDY_REMOVED =	0x04
+
+HON_MODE_NORMAL			= 0x00
+HON_MODE_INVISIBLE		= 0x03
 def parsePacket(socket, packet):
 	if len(packet) == 0:
 		return
@@ -85,7 +108,7 @@ def parsePacket(socket, packet):
 	r = Struct("response", ULInt16("size"), ULInt16("packetid"))
 	data = r.parse(packet)
 	log.debug("<< 0x%x - Len: %d" % (data.packetid, len(packet)))
-	if data.packetid == HON_SC_AUTH_ACCEPTED:
+	if data.packetid == HON_SC_PING:
 		sendPong(socket)
 	elif data.packetid == HON_SC_WHISPER:
 		parseWhisper(packet)
@@ -106,9 +129,9 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 	"""
 	# Invisible mode flag.
 	if invis == True:
-		mode = 0x03
+		mode = HON_MODE_INVISIBLE
 	else:
-		mode = 0x00
+		mode = HON_MODE_NORMAL
 	
 	# Build the packet
 	c = Struct("login",
@@ -165,7 +188,8 @@ def parseTotalOnline(packet):
 
 def parseInitialStatuses(packet):
 	""" Parses the initial status packet sent. 
-		Sets up most of the UI as in, showing buddy statuses, joining channels, diplaying account icons and what not.
+		Retrieves states for all online buddies, also contains some information I'm unsure of
+		what to do with yet.
 	"""
 
 	buddycount = int(struct.unpack_from('B', packet[4:8])[0]) # Tuples?!!
@@ -175,21 +199,30 @@ def parseInitialStatuses(packet):
 		log.debug("Parsing buddy data for %i buddies." % buddycount)
 		while i <= int(buddycount):
 			status = int(struct.unpack_from('B', buddy_data[4])[0]) # What the hell, why was this a tuple pre-int()?
-			if status == 5:
+			nick = ""
+			if status == HON_STATUS_INLOBBY or status == HON_STATUS_INGAME:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"), CString("server"), CString("gamename"))
 				r = c.parse(buddy_data)
-				buddy_data = buddy_data[6 + (len(br.server)+len(r.gamename)):]
-				log.info(str(br.buddyid) + " is online and in the game " + r.gamename)
+				nick = user.id2nick(r.buddyid)
+				buddy_data = buddy_data[6 + (len(r.server)+len(r.gamename)):]
+				log.debug(nick + " is online and in the game " + r.gamename)
 			else:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"))
 				r = c.parse(buddy_data[:8])
+				nick = user.id2nick(r.buddyid)
 				buddy_data = buddy_data[6:]
-				log.info(str(r.buddyid) + " is online")
-			i = i+1
+				log.debug(nick + " is online")
+			
+			if nick != "":
+				# Check for a name because sometimes weird and random data is returned.. Also a name is needed
+				# to find the user to update.
+				# user.updateStatus(nick)
+				pass
+			i+=1
 
 def parseUserStatusUpdate(packet):
 	""" Parses a user status update, fired when a user joins a game, logs on?, etc. 
-		Updates the buddy statuses on the UI.
+		Updates the state of buddies.
 	"""
 
 	pass

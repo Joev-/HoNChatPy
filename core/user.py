@@ -1,3 +1,4 @@
+import log
 """ 
 Functions and information for globally accessable objects, Users, Account, Channels, Buddies/Bans/Ignores. etc.
 ----------
@@ -6,7 +7,31 @@ Functions and information pertaining to users, including buddies, bans, ignores 
 These are needed as they are global objects which are created when a response is returned from the client requester 
 and will be updated in real time. The response contains a big list of buddies, bans, ignores, and other than watching for
 buddy/ignore/ban add/remove packets is the only way to obtain this information.
+
+"""
+account = None
+
+def id2nick(bid):
+	for user in account.buddylist:
+		if bid == user.buddyid:
+			if user.clantag != "":
+				clantag = "[" + user.clantag + "]"
+			else:
+				clantag = ""
+			name = clantag + user.nickname
+			return name
+	return str(bid) # It's going to be used as a string anyway...
+
+def setStatus(nick, server, gamename, status):
+	""" Update the status for a buddy. Pop-up or GUI notifications can be added here.
+		Some data like server and game name are not stored... Buuuut, they could be.
+	"""
+	global account
+	for user in account.buddylist:
+		if user.nickname == nick:
+			user.status = status
 	
+"""
 A User object holds information pertaining a user, can be a clan member, a buddy, both, or none. 
 
 A user holds the following
@@ -16,34 +41,45 @@ A user holds the following
 	+ clanTag 		~ The user's clan tag, to go together with the nick.
 	+ status		~ The current status of the user. e.g. Not Found, Offline, In Channels... and In Game....
 	+ flags			~ Flags for the user, e.g. prepurchased, officer, admin, staff.
-	+ buddy			~ A boolean if the user is a buddy of the logged in user or not.
-	+ clanMember	~ A boolean if the user is a clan member of the logged in user's clan or not.
+
+Possible information to hold.
+	+ If the user is in a game it would show the game name and server.. Optionally that they are in. 
+	  Storing it would reduce requests, and it would be changed when the user leaves a game since a new
+	  status is sent anyway.
 
 Some information about users can be obtained using a whois command, the whois returns the user's status and the channels the 
 user is currently in unless the user is in a game. If the user is in a game then it returns the game name and the... current
 game time. e.g. "Current game time: Lobby" or "Current game time: Banning" or "Current game time: 0:39:00."
-Full information in the tcp file documentation.
+"""
+class User:
+	def __init__(self, accid, buddyid, nick, clantag = "", clanname = None, status = 0, flag = 0x00):
+		self.accid = int(accid)
+		self.buddyid = int(buddyid)
+		self.nickname = nick
+		self.status = int(status)
+		self.flag = int(flag)
+		self.clantag = clantag
+		self.clanname = clanname
 
+"""
 An account object holds information pertaining to the user who is logged in. It will store some account information 
 which may be needed by the program.
 
-
-
 """
+class Account:
+	def __init__(self, super_id, nickname, cookie, auth_hash, chat_url, ip):
+		self.super_id = super_id
+		self.nickname = nickname
+		self.cookie = cookie
+		self.auth_hash = auth_hash
+		self.chat_url = chat_url
+		self.ip = ip
+		self.buddylist = []
+		self.banlist = []
+		self.ignorelist = []
 
-buddyList = []
-banList = []
-ignoreList = []
-
-class User(object):
-	pass
-
-class Account(object):
-
-	def __init__(self):
-		pass
-
-
+		global account
+		account = self
 """ 
 Channel Information
 
@@ -55,8 +91,6 @@ A channel holds the following
 """
 
 class Channel:
-
-	def __init__(self):
-		pass
+	pass
 
 		
