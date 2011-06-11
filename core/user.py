@@ -1,17 +1,15 @@
 import log
 """ 
 Functions and information for globally accessable objects, Users, Account, Channels, Buddies/Bans/Ignores. etc.
-----------
-
-Functions and information pertaining to users, including buddies, bans, ignores and other such stuff.
 These are needed as they are global objects which are created when a response is returned from the client requester 
 and will be updated in real time. The response contains a big list of buddies, bans, ignores, and other than watching for
 buddy/ignore/ban add/remove packets is the only way to obtain this information.
-
 """
 account = None
 
+""" Functions """
 def id2nick(bid):
+	""" Provide a user's nick instead of their ID. Purely visual, useful for notifications."""
 	for user in account.buddylist:
 		if bid == user.buddyid:
 			if user.clantag != "":
@@ -23,7 +21,7 @@ def id2nick(bid):
 	return str(bid) # It's going to be used as a string anyway...
 
 def setStatus(nick, server, gamename, status):
-	""" Update the status for a buddy. Pop-up or GUI notifications can be added here.
+	""" Update the status for a buddy.
 		Some data like server and game name are not stored... Buuuut, they could be.
 	"""
 	global account

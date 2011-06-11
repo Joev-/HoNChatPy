@@ -12,8 +12,8 @@ masterServer = "http://masterserver.hon.s2games.com/"
 header = { 'User-Agent' : "S2 Games/Heroes of Newerth/" + HONVERSION + "/lac/x86-biarch" }
 
 def hash(password):
-		""" Hashes a password to MD5 """
-		return hashlib.md5(password).hexdigest()
+	""" Hashes a password to MD5 """
+	return hashlib.md5(password).hexdigest()
 
 def httpget(url):
 	url = masterServer + url

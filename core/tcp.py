@@ -73,6 +73,7 @@ Server -> Client packets
 		* All strings are zero terminated (\\x00). Can be grabbed using CString.
 		* Server -> Client packets are always preceded by it's length
 		* Must send a chat protocol version!
+		* On the 9th June 2011 the maintenence made changes to the servers, the new chat server IP is 50.56.42.64 and the protocol was bumped to 0x0E.
 """
 import log
 import user
@@ -101,7 +102,14 @@ HON_NOTIFICATION_BUDDY_REMOVED =	0x04
 
 HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
+
+""" Functions """
 def parsePacket(socket, packet):
+	""" Parses the incoming packet by passing it to the relevant function.
+		The socket is needed for the ping, but it's sort of bloated data 
+		here because that's the only place it's used. Is there
+		some other way to get the socket when sending the pong?
+	"""
 	if len(packet) == 0:
 		return
 	
@@ -155,7 +163,7 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 		 otherwise the log in failed and something is wrong. """
 
 	resp = socket.recv(1024)
-	if len(resp) is None or 0:
+	if len(resp) == 0:
 		return 0
 			
 	# Handle the login response here
