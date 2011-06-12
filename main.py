@@ -38,8 +38,8 @@ def main():
 	
 	# Logged_in is true so try connecting to the chat server now.
 	# Thread the packet parsing
-	tcp.packetParser(conn).setDaemon(True)
-	tcp.packetParser(conn).start()
+	tcp.PacketParser(conn).setDaemon(True)
+	tcp.PacketParser(conn).start()
 
 	while logged_in == True:
 		command = raw_input("> ")

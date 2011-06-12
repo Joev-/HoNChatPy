@@ -104,7 +104,7 @@ HON_NOTIFICATION_BUDDY_REMOVED =	0x04
 HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
 
-class packetParser(threading.Thread):
+class PacketParser(threading.Thread):
 	def __init__(self, conn):
 		threading.Thread.__init__(self)
 		self.conn = conn
