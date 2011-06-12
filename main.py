@@ -16,9 +16,8 @@ from core import *
 def sigint_handler(signum,  frame):
 	"""Handles SIGINT signal (<C-c>). Quits program."""
 	log.notice("Quitting...")
-	# sys.stdout.flush()
-	# sys.exit(0)
-	os._exit(1)
+	sys.exit(0) # If sys.exit is used then 'Caught SIGINT' is also called in the except catch below.
+	# os._exit(1)
 
 def main():
 	logged_in = False
@@ -31,30 +30,27 @@ def main():
 		# Request an initial connection
 		conn = Connection()
 		result = conn.connect(usr, passw)
-		if result == True:
-			logged_in = True
-		else:
-			logged_in = False
-	
+		logged_in = result
+			
 	# Logged_in is true so try connecting to the chat server now.
 	# Thread the packet parsing
-	tcp.PacketParser(conn).setDaemon(True)
-	tcp.PacketParser(conn).start()
-
-	while logged_in == True:
-		command = raw_input("> ")
-		if command != "":
-			log.debug("Received command " + command)
-		if command == "DC":
-			log.debug("Closing socket ")
-			conn.close()
-			
+	t = tcp.PacketParser(conn)
+	t.daemon = True
+	t.start()
+	
+	""" Temporary solution for catching SIGINT in threads. Remove at a later point. """
+	try:
+		while t.is_alive():
+			t.join(timeout=1.0)
+	except (KeyboardInterrupt, SystemExit):
+		log.notice("Caught SIGINT") # Doesn't get called?
+		t.stop()
 	
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
 	
 	# If settings were stored in variables use:
-	#log.addLog(sys.stdout, STDOUT_LOGLEVEL, STDOUT_VERBOSE, SCREEN)
-	log.add_logger(sys.stdout, 'DEBUG', False, True)
-	log.add_logger('honchat_log', 'DEBUG', True, False)
+	#log.addLog(sys.stdout, STDOUT_LOGLEVEL, STDOUT_VERBOSE)
+	log.add_logger(sys.stdout, 'DEBUG', False)
+	log.add_logger('honchat_log', 'DEBUG', True)
 	main()

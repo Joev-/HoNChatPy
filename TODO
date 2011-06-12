@@ -1,6 +1,5 @@
 TODO:
-
-* Fix thread handling and interrupts. Works very poorly at the moment, if the SIGINT is caught then it executes os._exit(1), this is needed as sys.exit() only exits the current loop?
+	* Fix thread handling and interrupts. Works very poorly at the moment, or... Not at all!
 
 Packet parsing:
 	- Lots of unhandled packets
@@ -25,13 +24,4 @@ GUI
 	- Much to do.
 
 BUGS:
-
-	* 01 - C-c in this loop does causes only the loop to break, not exit the entire program. Example below.
-		[2011-06-12 13:13:52]     INFO: Connecting...
-		[2011-06-12 13:13:52]   NOTICE: Getting authentication data...
-		^C[2011-06-12 13:13:53]   NOTICE: Quitting..
-		[2011-06-12 13:13:53]   NOTICE: Connection error, retrying in 1
-		^C[2011-06-12 13:13:54]   NOTICE: Quitting..
-		[2011-06-12 13:13:54]   NOTICE: Connection error, retrying in 2
-		^C[2011-06-12 13:13:55]   NOTICE: Quitting..
-	* 02 
+	None to be pinpointed ATM.

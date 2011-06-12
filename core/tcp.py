@@ -66,12 +66,15 @@ Server -> Client packets
 		+ 0x01 - Moderator
 		+ 0x02 - Leader?
 		+ 0x03 - Administrator?
-		+ 0x04  - Staff?
+		+ 0x04 - Staff?
 		+ 0x40 - Prepurchased, gold shield? 
 
 	Notes:
-		* All strings are zero terminated (\\x00). Can be grabbed using CString.
-		* Server -> Client packets are always preceded by it's length
+		* All strings are zero terminated (\\x00). Can be grabbed using CString. This means that strings read 
+		  using cstring will ignore the padded character, but the length still includes that padded char
+		  so make sure to +1 the len like in the followng line.
+		  buddy_data[6 + (len(r.server)+1+len(r.gamename)+1):]
+		* Server -> Client packets are always preceded by it's length.
 		* Must send a chat protocol version!
 		* On the 9th June 2011 the maintenence made changes to the servers, the new chat server IP is 50.56.42.64 and the protocol was bumped to 0x0E.
 """
@@ -81,7 +84,6 @@ import log
 import user
 from lib.construct import *
 from packet import *
-
 
 """ Some constants """
 HON_FLAGS_NONE			= 0x00
@@ -96,13 +98,13 @@ HON_STATUS_ONLINE		= 3
 HON_STATUS_INLOBBY		= 4
 HON_STATUS_INGAME		= 5
 
-HON_NOTIFICATION_ADDED_AS_BUDDY =	0x01
-HON_NOTIFICATION_BUDDY_ACCEPTED =	0x02
-HON_NOTIFICATION_REMOVED_AS_BUDDY =	0x03
-HON_NOTIFICATION_BUDDY_REMOVED =	0x04
-
 HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
+
+HON_NOTIFICATION_ADDED_AS_BUDDY   =	0x01
+HON_NOTIFICATION_BUDDY_ACCEPTED   =	0x02
+HON_NOTIFICATION_REMOVED_AS_BUDDY =	0x03
+HON_NOTIFICATION_BUDDY_REMOVED    =	0x04
 
 class PacketParser(threading.Thread):
 	def __init__(self, conn):
@@ -240,7 +242,7 @@ def parse_initial_statuses(packet):
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"), CString("server"), CString("gamename"))
 				r = c.parse(buddy_data)
 				nick = user.id2nick(r.buddyid)
-				buddy_data = buddy_data[6 + (len(r.server)+len(r.gamename)):]
+				buddy_data = buddy_data[6 + (len(r.server)+1+len(r.gamename)+1):]
 				log.debug(nick + " is online and in the game " + r.gamename)
 			else:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"))

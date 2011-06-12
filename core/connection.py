@@ -32,7 +32,7 @@ class Connection:
 
 		log.notice("Getting authentication data...")
 		tries = 0
-		# BUG-01
+
 		while True:
 			try:
 				response = requester.auth(user, password)
@@ -84,5 +84,4 @@ class Connection:
 	def close(self):
 		""" Closes a connection """
 		self.connected = False
-
 		self.socket.close()
