@@ -22,7 +22,7 @@ levels = {
     'DEBUG' : 7,
 }
 
-def addLogger(file, level, verbose = False):
+def add_logger(file, level, verbose = False):
 	global levels
 	global logfiles
 	if level == None:
@@ -38,14 +38,14 @@ def addLogger(file, level, verbose = False):
 	Gets the calling function by going down the stack trace to the defined
 	point by the level. Some notes:
 		level 0 - This is getCallingFunction, i.e THIS function.
-		level 1 - This will be doLog because doLog called THIS.
+		level 1 - This will be do_log because do_log called THIS.
 		level 2 - This will be  one of the log calling functions, i.e 
 																	log.panic()
 																	log.notice()
 																	log.debug()
 		level 3 - This will be the true calling functions.
 """
-def getCallingFunction(levels):
+def get_calling_function(levels):
 	trace = traceback.extract_stack()
 	if len(trace) > levels:
 		frame = trace[-levels -1]
@@ -53,11 +53,11 @@ def getCallingFunction(levels):
 		frame = trace[0]
 	return frame[2]
 
-def doLog(loglevel, message):
+def do_log(loglevel, message):
 	global levels
 	global logfiles
 	currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-	function = getCallingFunction(3)
+	function = get_calling_function(3)
 	lightMessage = "[%s] %8s: %s\n" % (currentTime, loglevel, message)
 	verboseMessage = "[%s] %8s: %20s(): %s\n" % (currentTime, loglevel, function, message)
 	for (file, level, verbose) in logfiles:
@@ -70,25 +70,25 @@ def doLog(loglevel, message):
 
 """ The functions which may be called to log messages. """
 def panic(message):
-    doLog('PANIC', message)
+    do_log('PANIC', message)
 
 def alert(message):
-    doLog('ALERT', message)
+    do_log('ALERT', message)
 
 def critical(message):
-    doLog('CRITICAL', message)
+    do_log('CRITICAL', message)
 
 def error(message):
-    doLog('ERROR', message)
+    do_log('ERROR', message)
 
 def warning(message):
-    doLog('WARNING', message)
+    do_log('WARNING', message)
 
 def notice(message):
-    doLog('NOTICE', message)
+    do_log('NOTICE', message)
 
 def info(message):
-    doLog('INFO', message)
+    do_log('INFO', message)
 
 def debug(message):
-    doLog('DEBUG', message)
+    do_log('DEBUG', message)

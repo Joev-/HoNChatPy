@@ -104,7 +104,7 @@ HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
 
 """ Functions """
-def parsePacket(socket, packet):
+def parse_packet(socket, packet):
 	""" Parses the incoming packet by passing it to the relevant function.
 		The socket is needed for the ping, but it's sort of bloated data 
 		here because that's the only place it's used. Is there
@@ -117,15 +117,15 @@ def parsePacket(socket, packet):
 	data = r.parse(packet)
 	log.debug("<< 0x%x - Len: %d" % (data.packetid, len(packet)))
 	if data.packetid == HON_SC_PING:
-		sendPong(socket)
+		send_pong(socket)
 	elif data.packetid == HON_SC_WHISPER:
-		parseWhisper(packet)
+		parse_whisper(packet)
 	elif data.packetid == HON_SC_INITIAL_STATUS:
-		parseInitialStatuses(packet)
+		parse_initial_statuses(packet)
 	elif data.packetid == HON_SC_UPDATE_STATUS:
-		parseUserStatusUpdate(packet)
+		parse_user_status_update(packet)
 	elif data.packetid == HON_SC_TOTAL_ONLINE:
-		parseTotalOnline(packet)
+		parse_total_online(packet)
 	# else:
 	# 	log.debug("Unknown packet: %x" % data.packetid)
 
@@ -173,6 +173,8 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 
 	if data.packetid == HON_SC_AUTH_ACCEPTED:
 		# Success! Logged in!
+		# Auto connect channels need to be sent at this point!
+		# joinChannel() or so.
 		return 1
 
 	# Something went wrong...
@@ -180,21 +182,21 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 	return 0
 
 """ Client to server """
-def sendPong(socket):
+def send_pong(socket):
 	""" Replies to a ping request (0x2A00) with a pong response (0x2A01) """
 	socket.send(struct.pack('h', HON_CS_PONG))
 	log.debug(">> Pong")
 
 
 """ Server to Client """
-def parseTotalOnline(packet):
+def parse_total_online(packet):
 	""" Gets the number of players online """
 
 	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), ULInt32("count"))
 	r = c.parse(packet)
 	log.notice(str(r.count) + " players online.")
 
-def parseInitialStatuses(packet):
+def parse_initial_statuses(packet):
 	""" Parses the initial status packet sent. 
 		Retrieves states for all online buddies, also contains some information I'm unsure of
 		what to do with yet.
@@ -206,7 +208,7 @@ def parseInitialStatuses(packet):
 		i = 1
 		log.debug("Parsing buddy data for %i buddies." % buddycount)
 		while i <= int(buddycount):
-			status = int(struct.unpack_from('B', buddy_data[4])[0]) # What the hell, why was this a tuple pre-int()?
+			status = int(struct.unpack_from('B', buddy_data[4])[0])
 			nick = ""
 			if status == HON_STATUS_INLOBBY or status == HON_STATUS_INGAME:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"), CString("server"), CString("gamename"))
@@ -228,14 +230,14 @@ def parseInitialStatuses(packet):
 				pass
 			i+=1
 
-def parseUserStatusUpdate(packet):
+def parse_user_status_update(packet):
 	""" Parses a user status update, fired when a user joins a game, logs on?, etc. 
 		Updates the state of buddies.
 	"""
 
 	pass
 
-def parseWhisper(packet):
+def parse_whisper(packet):
 	""" A normal whisper from anyone """
 	c = Struct("packet", ULInt16("size"), ULInt16("packetid"), CString("name"), CString("message"))
 	r = c.parse(packet)

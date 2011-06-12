@@ -1,4 +1,4 @@
-""" Packet IDs as of 3.6.11 """
+""" Packet IDs. Updated 11th June 2011. """
 
 """ Server -> Client """
 HON_SC_AUTH_ACCEPTED			= 0x1C00

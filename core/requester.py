@@ -44,34 +44,34 @@ def logout(cookie):
 	url = "client_requester.php?f=logout&cookie=%s" % cookie 
 	return httpget(url)
 
-def serverList(cookie, gametype):
+def server_list(cookie, gametype):
 	pass
 
 def nick2id(nickname):
 	pass
 
-def newBuddy(cookie, aid, bid):
+def new_buddy(cookie, aid, bid):
 	pass
 
-def removeBuddy(cookie, aid, bid):
+def remove_buddy(cookie, aid, bid):
 	pass
 
-def newBanned(cookie, aid, bid, reason):
+def new_banned(cookie, aid, bid, reason):
 	pass
 
-def removeBanned(cookie, aid, bid, reason):
+def remove_banned(cookie, aid, bid, reason):
 	pass
 
-def newIgnored(cookie, aid, iid, reason):
+def new_ignored(cookie, aid, iid, reason):
 	pass
 
-def removeIgnored(cookie, aid, iid, reason):
+def remove_ignored(cookie, aid, iid, reason):
 	pass
 
-def statsRequest(aid):
+def stats_request(aid):
 	pass
 
-def statsRequestRanked(aid):
+def stats_request_ranked(aid):
 	pass
 
 def motd():

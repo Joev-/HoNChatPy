@@ -66,7 +66,7 @@ class Connection:
 
 		return True
 	
-	def socket(self):
+	def make_socket(self):
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.connect((user.account.chat_url, CHAT_PORT))
 

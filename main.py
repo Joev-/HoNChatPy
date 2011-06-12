@@ -29,7 +29,7 @@ def sigint_handler(signum,  frame):
 def main():
 	usr = raw_input("Username: ")
 	#passw = raw_input("Password: ")
-        passw = getpass.getpass()         
+	passw = getpass.getpass()         
 	log.info("Connecting...")
 
 	# Request an initial connection
@@ -37,19 +37,19 @@ def main():
 	result = conn.connect(usr, passw)
 	if result == True:
 		# Got the user info, so try connecting to the chat server now.
-		socket = conn.socket()
+		socket = conn.make_socket()
 
 		# Infinate loop, receive packets and process them.
 		while conn.connected == True:
 			packet = socket.recv(1024)
 			# log.debug("Packet length is : " + str(len(packet)))
-			tcp.parsePacket(socket, packet)
+			tcp.parse_packet(socket, packet)
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
 	
 	# If settings were stored in variables use:
 	#log.addLog(sys.stdout, STDOUT_LOGLEVEL, STDOUT_VERBOSE)
-	log.addLogger(sys.stdout, 'DEBUG', False)
-	log.addLogger('honchat_log', 'DEBUG', True)
+	log.add_logger(sys.stdout, 'DEBUG', False)
+	log.add_logger('honchat_log', 'DEBUG', True)
 	main()

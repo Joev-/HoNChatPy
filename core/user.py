@@ -20,7 +20,7 @@ def id2nick(bid):
 			return name
 	return str(bid) # It's going to be used as a string anyway...
 
-def setStatus(nick, server, gamename, status):
+def set_status(nick, server, gamename, status):
 	""" Update the status for a buddy.
 		Some data like server and game name are not stored... Buuuut, they could be.
 	"""
