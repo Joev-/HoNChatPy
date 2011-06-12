@@ -16,34 +16,29 @@ import getpass
 
 from core import *
 
-cookie = None
-ip = None
-auth = None
-chatserv = None
-
 def sigint_handler(signum,  frame):
     """Handles SIGINT signal (<C-c>). Quits program."""
     log.notice("Quitting..")
     sys.exit(0)
 
 def main():
-	usr = raw_input("Username: ")
-	#passw = raw_input("Password: ")
-	passw = getpass.getpass()         
-	log.info("Connecting...")
+	_logged_in = False
 
-	# Request an initial connection
-	conn = Connection()
-	result = conn.connect(usr, passw)
-	if result == True:
-		# Got the user info, so try connecting to the chat server now.
-		socket = conn.make_socket()
+	while _logged_in == False:
+		usr = raw_input("Username: ")
+		passw = getpass.getpass()
+		log.info("Connecting...")
 
-		# Infinate loop, receive packets and process them.
-		while conn.connected == True:
-			packet = socket.recv(1024)
-			# log.debug("Packet length is : " + str(len(packet)))
-			tcp.parse_packet(socket, packet)
+		# Request an initial connection
+		conn = Connection()
+		result = conn.connect(usr, passw)
+		if result == True:
+			_logged_in = True
+			# Got the user info, so try connecting to the chat server now.
+			# Thread the packet parsing
+			tcp.parseThread(conn).start()
+		else:
+			_logged_in = False
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)

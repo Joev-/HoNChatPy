@@ -10,8 +10,8 @@ import traceback
 	Call one of the logging functions to add a message, i.e log.panic(message) or log.notice(message).
 	If no logger is set up prior to calling the function then it will silently fail.
 """
-logfiles = []
-levels = {
+_logfiles = []
+_levels = {
 	'PANIC' : 0,
     'ALERT' : 1,
     'CRITICAL' : 2,
@@ -23,15 +23,15 @@ levels = {
 }
 
 def add_logger(file, level, verbose = False):
-	global levels
-	global logfiles
+	global _levels
+	global _logfiles
 	if level == None:
 		return True
-	if level not in levels:
+	if level not in _levels:
 		return False
 	if isinstance(file, str):
 		file = open(file, 'a')
-	logfiles.append((file, level, verbose))
+	_logfiles.append((file, level, verbose))
 	return True
 
 """ 
@@ -54,14 +54,14 @@ def get_calling_function(levels):
 	return frame[2]
 
 def do_log(loglevel, message):
-	global levels
-	global logfiles
+	global _levels
+	global _logfiles
 	currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 	function = get_calling_function(3)
 	lightMessage = "[%s] %8s: %s\n" % (currentTime, loglevel, message)
 	verboseMessage = "[%s] %8s: %20s(): %s\n" % (currentTime, loglevel, function, message)
-	for (file, level, verbose) in logfiles:
-		if levels[loglevel] <= levels[level]:
+	for (file, level, verbose) in _logfiles:
+		if _levels[loglevel] <= _levels[level]:
 			if verbose:
 				file.write(verboseMessage)
 			else:

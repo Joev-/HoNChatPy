@@ -75,12 +75,14 @@ Server -> Client packets
 		* Must send a chat protocol version!
 		* On the 9th June 2011 the maintenence made changes to the servers, the new chat server IP is 50.56.42.64 and the protocol was bumped to 0x0E.
 """
+import struct
+import threading
+
 import log
 import user
 from lib.construct import *
 from packet import *
 
-import struct
 
 """ Some constants """
 HON_FLAGS_NONE			= 0x00
@@ -102,6 +104,19 @@ HON_NOTIFICATION_BUDDY_REMOVED =	0x04
 
 HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
+
+class parseThread(threading.Thread):
+	def __init__(self, conn):
+		threading.Thread.__init__(self)
+		self.conn = conn
+	def run(self):
+		socket = self.conn.make_socket()
+
+		# Infinate loop, receive packets and process them.
+		while self.conn.connected == True:
+			packet = socket.recv(1024)
+			# log.debug("Packet length is : " + str(len(packet)))
+			parse_packet(socket, packet)
 
 """ Functions """
 def parse_packet(socket, packet):
