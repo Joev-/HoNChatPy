@@ -107,7 +107,9 @@ HON_MODE_INVISIBLE		= 0x03
 class PacketParser(threading.Thread):
 	def __init__(self, conn):
 		threading.Thread.__init__(self)
+		self._stop = threading.Event()
 		self.conn = conn
+		
 	def run(self):
 		socket = self.conn.make_socket()
 
@@ -116,6 +118,16 @@ class PacketParser(threading.Thread):
 			packet = socket.recv(1024)
 			# log.debug("Packet length is : " + str(len(packet)))
 			parse_packet(socket, packet)
+
+		if self.conn.connected != True:
+			log.notice("Disconnected.. Stopping thread.")
+			self.stop()
+
+	def stop (self):
+		self._stop.set()
+
+	def stopped (self):
+		return self._stop.isSet()
 
 """ Functions """
 def parse_packet(socket, packet):

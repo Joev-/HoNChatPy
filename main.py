@@ -9,7 +9,7 @@
                                                 __/ |
                                                |___/ 
 """
-import sys, os, time, signal, getpass
+import sys, os, time, signal, getpass, threading
 
 from core import *
 
@@ -45,6 +45,10 @@ def main():
 		command = raw_input("> ")
 		if command != "":
 			log.debug("Received command " + command)
+		if command == "DC":
+			log.debug("Closing socket ")
+			conn.close()
+			
 	
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, sigint_handler)
