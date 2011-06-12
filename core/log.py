@@ -1,5 +1,4 @@
-import time
-import traceback
+import time, traceback, sys, readline
 
 """ 
 	Provides logging methods and log file handling.
@@ -22,7 +21,7 @@ _levels = {
     'DEBUG' : 7,
 }
 
-def add_logger(file, level, verbose = False):
+def add_logger(file, level, verbose = False, screen = False):
 	global _levels
 	global _logfiles
 	if level == None:
@@ -31,7 +30,7 @@ def add_logger(file, level, verbose = False):
 		return False
 	if isinstance(file, str):
 		file = open(file, 'a')
-	_logfiles.append((file, level, verbose))
+	_logfiles.append((file, level, verbose, screen))
 	return True
 
 """ 
@@ -60,13 +59,21 @@ def do_log(loglevel, message):
 	function = get_calling_function(3)
 	lightMessage = "[%s] %8s: %s\n" % (currentTime, loglevel, message)
 	verboseMessage = "[%s] %8s: %20s(): %s\n" % (currentTime, loglevel, function, message)
-	for (file, level, verbose) in _logfiles:
+	for (file, level, verbose, screen) in _logfiles:
 		if _levels[loglevel] <= _levels[level]:
 			if verbose:
 				file.write(verboseMessage)
+				file.flush()
 			else:
-				file.write(lightMessage)
-			file.flush()
+				if screen:
+					sys.stdout.write('\r'+' '*(len(readline.get_line_buffer())+2)+'\r')
+					file.write(lightMessage)
+					file.flush()
+					print('> ' + readline.get_line_buffer())
+					# sys.stdout.flush()
+				else:
+					file.write(lightMessage)
+					file.flush()
 
 """ The functions which may be called to log messages. """
 def panic(message):

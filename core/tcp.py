@@ -75,8 +75,7 @@ Server -> Client packets
 		* Must send a chat protocol version!
 		* On the 9th June 2011 the maintenence made changes to the servers, the new chat server IP is 50.56.42.64 and the protocol was bumped to 0x0E.
 """
-import struct
-import threading
+import struct, threading
 
 import log
 import user
@@ -105,7 +104,7 @@ HON_NOTIFICATION_BUDDY_REMOVED =	0x04
 HON_MODE_NORMAL			= 0x00
 HON_MODE_INVISIBLE		= 0x03
 
-class parseThread(threading.Thread):
+class packetParser(threading.Thread):
 	def __init__(self, conn):
 		threading.Thread.__init__(self)
 		self.conn = conn
@@ -217,7 +216,7 @@ def parse_initial_statuses(packet):
 		what to do with yet.
 	"""
 
-	buddycount = int(struct.unpack_from('B', packet[4:8])[0]) # Tuples?!!
+	buddycount = int(struct.unpack_from('i', packet[4:8])[0]) # Tuples?!!
 	buddy_data = packet[8:]
 	if buddycount > 0:
 		i = 1

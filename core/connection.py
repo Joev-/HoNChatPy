@@ -32,7 +32,7 @@ class Connection:
 
 		log.notice("Getting authentication data...")
 		tries = 0
-		# Funny thing, while in this loop, if one presses C-c, it only breaks the loop and not the entire program.
+		# BUG-01
 		while True:
 			try:
 				response = requester.auth(user, password)
