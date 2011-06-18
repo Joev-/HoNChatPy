@@ -1,4 +1,5 @@
-import time, traceback, sys, readline
+import time
+import traceback
 
 """ 
 	Provides logging methods and log file handling.
@@ -9,8 +10,8 @@ import time, traceback, sys, readline
 	Call one of the logging functions to add a message, i.e log.panic(message) or log.notice(message).
 	If no logger is set up prior to calling the function then it will silently fail.
 """
-_logfiles = []
-_levels = {
+logfiles = []
+levels = {
 	'PANIC' : 0,
     'ALERT' : 1,
     'CRITICAL' : 2,
@@ -22,15 +23,15 @@ _levels = {
 }
 
 def add_logger(file, level, verbose = False):
-	global _levels
-	global _logfiles
+	global levels
+	global logfiles
 	if level == None:
 		return True
-	if level not in _levels:
+	if level not in levels:
 		return False
 	if isinstance(file, str):
 		file = open(file, 'a')
-	_logfiles.append((file, level, verbose))
+	logfiles.append((file, level, verbose))
 	return True
 
 """ 
@@ -53,20 +54,19 @@ def get_calling_function(levels):
 	return frame[2]
 
 def do_log(loglevel, message):
-	global _levels
-	global _logfiles
+	global levels
+	global logfiles
 	currentTime = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 	function = get_calling_function(3)
 	lightMessage = "[%s] %8s: %s\n" % (currentTime, loglevel, message)
 	verboseMessage = "[%s] %8s: %20s(): %s\n" % (currentTime, loglevel, function, message)
-	for (file, level, verbose) in _logfiles:
-		if _levels[loglevel] <= _levels[level]:
+	for (file, level, verbose) in logfiles:
+		if levels[loglevel] <= levels[level]:
 			if verbose:
 				file.write(verboseMessage)
-				file.flush()
 			else:
 				file.write(lightMessage)
-				file.flush()
+			file.flush()
 
 """ The functions which may be called to log messages. """
 def panic(message):

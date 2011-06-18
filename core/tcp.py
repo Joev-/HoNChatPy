@@ -70,12 +70,12 @@ Server -> Client packets
 		+ 0x40 - Prepurchased, gold shield? 
 
 	Notes:
-		* All strings are zero terminated (\\x00). Can be grabbed using CString. This means that strings read 
+		* All strings are zero terminated (0x00). Can be grabbed using CString. This means that strings read 
 		  using cstring will ignore the padded character, but the length still includes that padded char
 		  so make sure to +1 the len like in the followng line.
 		  buddy_data[6 + (len(r.server)+1+len(r.gamename)+1):]
 		* Server -> Client packets are always preceded by it's length.
-		* Must send a chat protocol version!
+		* Must send a valid chat protocol version!
 		* On the 9th June 2011 the maintenence made changes to the servers, the new chat server IP is 50.56.42.64 and the protocol was bumped to 0x0E.
 """
 import struct, threading
@@ -138,6 +138,7 @@ def parse_packet(socket, packet):
 		here because that's the only place it's used. Is there
 		some other way to get the socket when sending the pong?
 	"""
+
 	if len(packet) == 0:
 		return
 	
@@ -156,6 +157,12 @@ def parse_packet(socket, packet):
 		parse_total_online(packet)
 	# else:
 	# 	log.debug("Unknown packet: %x" % data.packetid)
+
+	""" Pipe the raw packet stream to a file for debugging """
+	f = open("raw-packets/" + str(data.packetid), "w")
+	print >>f, packet
+	f.flush()
+	f.close()
 
 def greet(socket, aid, cookie, ip, auth, invis = False):
 	""" Sends the initial login request to the chat server, sends the account id, cookie, ip, auth hash and chat protocol version.
@@ -202,7 +209,7 @@ def greet(socket, aid, cookie, ip, auth, invis = False):
 	if data.packetid == HON_SC_AUTH_ACCEPTED:
 		# Success! Logged in!
 		# Auto connect channels need to be sent at this point!
-		# joinChannel() or so.
+		# send_join_channel() or so.
 		return 1
 
 	# Something went wrong...
@@ -230,7 +237,7 @@ def parse_initial_statuses(packet):
 		what to do with yet.
 	"""
 
-	buddycount = int(struct.unpack_from('i', packet[4:8])[0]) # Tuples?!!
+	buddycount = int(struct.unpack_from('I', packet[4:8])[0]) # Tuples?!!
 	buddy_data = packet[8:]
 	if buddycount > 0:
 		i = 1
@@ -238,24 +245,29 @@ def parse_initial_statuses(packet):
 		while i <= int(buddycount):
 			status = int(struct.unpack_from('B', buddy_data[4])[0])
 			nick = ""
+			gamename = ""
+			flag = ""
 			if status == HON_STATUS_INLOBBY or status == HON_STATUS_INGAME:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"), CString("server"), CString("gamename"))
 				r = c.parse(buddy_data)
 				nick = user.id2nick(r.buddyid)
+				flag = str(r.flag)
 				buddy_data = buddy_data[6 + (len(r.server)+1+len(r.gamename)+1):]
-				log.debug(nick + " is online and in the game " + r.gamename)
+				gamename = r.gamename
 			else:
 				c = Struct("buddy", ULInt32("buddyid"), Byte("status"), Byte("flag"))
-				r = c.parse(buddy_data[:8])
+				r = c.parse(buddy_data[:6])
 				nick = user.id2nick(r.buddyid)
+				flag = str(r.flag)
 				buddy_data = buddy_data[6:]
-				log.debug(nick + " is online")
 			
 			if nick != "":
-				# Check for a name because sometimes weird and random data is returned.. Also a name is needed
-				# to find the user to update.
+				# Check for a name because sometimes my own account id is in the list of online buddies, why?
 				# user.updateStatus(nick)
-				pass
+				if gamename is not "":
+					log.notice(nick + " is online and in the game " + gamename + " with the account flag " + flag)
+				else:
+					log.notice(nick + " is online with the account flag " + flag)
 			i+=1
 
 def parse_user_status_update(packet):

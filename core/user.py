@@ -18,7 +18,7 @@ def id2nick(bid):
 				clantag = ""
 			name = clantag + user.nickname
 			return name
-	return str(bid) # It's going to be used as a string anyway...
+	return ""
 
 def set_status(nick, server, gamename, status):
 	""" Update the status for a buddy.

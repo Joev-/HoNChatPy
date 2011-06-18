@@ -1,5 +1,4 @@
-import hashlib
-import urllib2
+import hashlib, urllib2, socket
 import log 
 
 """ 

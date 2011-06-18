@@ -2,3 +2,11 @@
 *.pyc
 #ignore the log file???
 honchat_log
+
+stream.py
+test.py
+
+# raw-packets
+raw-packets
+raw-packets/*
+

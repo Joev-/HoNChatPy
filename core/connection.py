@@ -30,11 +30,11 @@ class Connection:
 	def connect(self, user, password):
 		""" Requests the user data and opens a socket using it."""
 
-		log.notice("Getting authentication data...")
-		tries = 0
+		tries = 1
 
 		while True:
 			try:
+				log.notice("Getting authentication data...")
 				response = requester.auth(user, password)
 				break
 			except:
@@ -42,7 +42,7 @@ class Connection:
 					log.critical("Failed to connect, something's wrong!")
 					return False
 				timeout = pow(2, tries)
-				log.notice("Connection error, retrying in %i " % timeout)
+				log.notice("Connection error, retrying in %i seconds." % timeout)
 				time.sleep(timeout)
 				tries += 1
 		
