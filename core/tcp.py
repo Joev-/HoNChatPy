@@ -117,9 +117,9 @@ class PacketParser(threading.Thread):
 
 		# Infinate loop, receive packets and process them.
 		while self.conn.connected == True:
-			packet = socket.recv(1024)
-			# log.debug("Packet length is : " + str(len(packet)))
-			parse_packet(socket, packet)
+			receive_packet(socket)
+			# packet = socket.recv(4096)
+			# parse_packet(socket, packet)
 
 		if self.conn.connected != True:
 			log.notice("Disconnected.. Stopping thread.")
@@ -132,6 +132,29 @@ class PacketParser(threading.Thread):
 		return self._stop.isSet()
 
 """ Functions """
+def receive_packet(socket):
+	packet = socket.recv_into(1024)
+
+	length = struct.unpack_from('H', packet[:2])[0]
+	log.debug("Expected length: " + str(length))
+	done = False
+	while not done:
+		log.debug("Packet length is currently " + str(len(packet)))
+		if len(packet) == length:
+			done = True
+		else:
+			# Still more data to come
+			buf = socket.recv(length - len(packet))
+			if not buf:
+				done = True
+			else:
+				packet = packet+buf
+
+	log.debug("Packet length is : " + str(len(packet)))
+	parse_packet(socket, packet)
+
+
+
 def parse_packet(socket, packet):
 	""" Parses the incoming packet by passing it to the relevant function.
 		The socket is needed for the ping, but it's sort of bloated data 
