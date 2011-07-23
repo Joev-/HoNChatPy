@@ -1,8 +1,14 @@
-#ignore pythons compiled files
+#ignore python's compiled files
 *.pyc
-#ignore the log file???
+
+# Ignore the honcore symlink
+lib/honcore
+
+#ignore the log file
 honchat_log
 
+# Random files
+setup.py
 stream.py
 test.py
 

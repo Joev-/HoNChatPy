@@ -2,6 +2,7 @@ TODO:
 	* Fix thread handling and interrupts. Works very poorly at the moment, or... Not at all!
 
 Packet parsing:
+	- Handle packets who's data has been split into multiple packets because it was too big to fit in the first.
 	- Lots of unhandled packets
 
 Packet Sending:
