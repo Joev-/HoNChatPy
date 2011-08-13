@@ -13,48 +13,54 @@ def md5hash(password):
 	""" Hashes a password to MD5 """
 	return hashlib.md5(password).hexdigest()
 
+chat_client = client.HoNClient()
+
 def main():
-	
-	while not client.is_logged_in():
+
+	while not chat_client.is_logged_in():
 		usr = raw_input("Username: ")
 		passw = getpass.getpass()
 
 		log.info("Logging in...")
 		try:
-			client.login(usr, md5hash(passw))
+			chat_client.login(usr, md5hash(passw))
 		except MasterServerError, e:
 			log.error(e)
 	
-	if client.is_logged_in():
+	if chat_client.is_logged_in():
 		log.info("Waiting for chat server to verify authentication.")
 		try:
-			client.chat_connect()
+			chat_client.chat_connect()
 		except ChatServerError, e:
 			log.error(e)
 	
-	while client.is_logged_in() and client.is_connected():
-		pass
+	while chat_client.is_logged_in() and chat_client.is_connected():
+		time.sleep(1)
 		
 			
 def disconnect_logout():
+	if chat_client.is_connected():
+		log.info("Disconnecting from chat server")
+
 	try:
 		# TODO: Handle response from chat_disconnect
 		# Not much can fail because the socket gets killed anyway
 		# it's up to the chat server to clean up broken connections. :)
-		log.info("Disconnecting from chat server")
-		client.chat_disconnect()
+		chat_client.chat_disconnect()
 	except ChatServerError, e:
 		pass
 	
+	if chat_client.is_logged_in():
+		log.info("Logging out")
+		
 	try:
 		# TODO: Handle requester response for logging out
-		log.info("Logging out")
-		client.logout()
+		chat_client.logout()
 	except MasterServerError, e:
 		if e.code == 106:
 			log.error('Logout was forced, master server did receive the logout request.')
 
-def sigint_handler(signum,  frame):
+def sigint_handler(signum,	frame):
 	"""Handles SIGINT signal (<C-c>). Quits program."""
 	disconnect_logout()
 	log.info("Quitting...")
