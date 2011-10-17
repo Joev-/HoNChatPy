@@ -16,3 +16,6 @@ test.py
 raw-packets
 raw-packets/*
 
+# My design work
+designs
+designs/*

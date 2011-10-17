@@ -1,0 +1,109 @@
+#login_window {
+    padding: 30px;
+}
+
+    #logo {
+        /*border: 1px solid red;*/
+        min-height: 40px;
+        /*margin: 0 auto;*/
+    }
+
+    QLabel {
+        color: #c6c5c5;
+        height: 17px;
+        max-height: 17px;
+    }
+
+    QLineEdit {
+        background: url('core/gui/resources/img/login-editbox_bg.png') #383838;
+        border: 1px solid #181818;
+        color: #c6c6c6;
+        height: 17px;
+        padding: 2px 4px;
+    }
+
+    QLineEdit:focus, QLineEdit:hover {
+        /*border-color: #B33737;*/
+    }
+    
+    QCheckBox:indicator {
+        /*background: #636363;
+        border: 1px solid #141414;*/
+        height: 17px;
+        width: 17px;
+    }
+
+    QCheckBox:indicator:unchecked {background: url('core/gui/resources/img/check_n.png');}
+    QCheckBox:indicator:unchecked:pressed {background: url('core/gui/resources/img/check_n_p.png');}
+
+    QCheckBox:indicator:checked {background: url('core/gui/resources/img/check_c.png');}
+
+    #forgot_pw {
+        /*color: #8b8b8b;*/
+        /*font-family: Arial, sans-serif;*/
+        /*font-size: 11px; Will get reset if setFont is called. */
+        max-width: 135px;
+        /*margin-bottom: 25px;*/
+    }
+    
+    #remember_me, #invisible {
+        color: #c6c5c5;
+        outline: none;
+        /*padding: 5px 0;*/
+    }
+
+    #remember_me:focus, #invisible:focus {
+        outline: none;
+    }
+
+    #error_msg {
+        color: #df4220;
+        font: 12px Arial sans-serif;
+        padding: 0;
+        margin: 0;
+    }
+
+URLLabel {
+    color: #8b8b8b;
+}
+
+URLLabel:hover {
+    color: #c6c6c6;
+}
+
+QPushButton {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #666666, stop:1 #4a4a4a);
+    /*border-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(249, 205, 58, 255), stop:1 rgba(249, 147, 57, 255));*/
+    /*background-color: #1F1F1F;*/
+    border-color: #3b3b3b;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 3px;
+    color: #bdbdbd;
+    font-size: 13px;
+    /*font-weight: bold;*/
+    height: 26px;
+    min-width: 45px;
+    padding: 0 5px;
+    text-align: center;
+}
+
+QPushButton:hover, QPushButton:focus {
+    /*background-color: #2A2A2A;*/
+    outline: none;
+}
+
+QPushButton:disabled {
+    background: none transparent;
+}
+
+#close {
+    background: url('core/gui/resources/img/close.png') no-repeat;
+    border: 0 none;
+    height: 19px;
+    width: 19px;
+}
+
+#close:hover {
+    background: url('core/gui/resources/img/close_h.png') no-repeat;
+}

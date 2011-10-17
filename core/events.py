@@ -2,7 +2,7 @@ import time
 from lib.honcore import handler
 import log
 
-@handler.event_handler('all')
+@handler.event_handler('packet_received')
 def on_event(packet_id, packet):
 	""" 
 	On all events.
