@@ -1,5 +1,6 @@
 from PySide import QtCore, QtGui
 from widgets import CustomLoginWindow, URLLabel
+from hashlib import md5 
 import sys, time
 
 class HCPLoginWindow(CustomLoginWindow):
@@ -11,9 +12,38 @@ class HCPLoginWindow(CustomLoginWindow):
         self.password = None
         self.remember_me = False
         self.invisible = False
-        self.settings = None
-
+        
         self.setup_ui()
+        self.load_settings()
+
+    def load_settings(self):
+        settings = QtCore.QSettings(QtCore.QSettings.IniFormat, QtCore.QSettings.UserScope, "HoNChatPy")
+        # Nice and hackish way to center the window on first run!
+        self.move(settings.value("loginwindow/pos", QtCore.QPoint(QtGui.QApplication.desktop().geometry().center() - self.geometry().center())))
+        self.remember_me = settings.value("user/remember", False)
+        if self.remember_me is True:
+            self.u_input.setText(settings.value("user/username"))
+            self.p_input.setText(settings.value("user/password"))
+            self.chk_invisible.setChecked(True if settings.value("user/invisible") == "true" else False)
+            self.chk_remember.setChecked(True if settings.value("user/remember") == "true" else False)
+
+    def save_settings(self):
+        # Ensure the password is hashed
+        if self.password is not None and len(self.password) != 32:
+            self.password = md5(self.password).hexdigest()
+
+        settings = QtCore.QSettings(QtCore.QSettings.IniFormat, QtCore.QSettings.UserScope, "HoNChatPy")
+        settings.setValue("loginwindow/pos", self.window().pos())
+        if self.remember_me is True:
+            settings.setValue("user/remember", self.remember_me)
+            settings.setValue("user/username", self.username)
+            settings.setValue("user/password", self.password)
+            settings.setValue("user/invisible", self.invisible)
+        else:
+            settings.setValue("user/remember", False)
+            settings.remove("user/username")
+            settings.remove("user/password")
+            settings.remove("user/invisible")
         
     def setup_ui(self):
         self.setWindowTitle("HoNChatPy")
@@ -23,7 +53,7 @@ class HCPLoginWindow(CustomLoginWindow):
         b_close.setObjectName('close')
         b_close.setFixedSize(19, 19)
         b_close.move(self.width() - 30, 10)
-        b_close.clicked.connect(sys.exit)
+        b_close.clicked.connect(self.__on_close_clicked)
         b_close.setMouseTracking(False)
 
         # HoNChatPy Logo
@@ -48,6 +78,7 @@ class HCPLoginWindow(CustomLoginWindow):
         u_input.textChanged.connect(self.__on_username_update)
         u_label.setBuddy(u_input)
         u_input.maxLength = 40
+        self.u_input = u_input
 
         # Password
         p_label = QtGui.QLabel(self)
@@ -58,6 +89,7 @@ class HCPLoginWindow(CustomLoginWindow):
         p_input.textChanged.connect(self.__on_password_update)
         p_input.setEchoMode(QtGui.QLineEdit.Password)
         p_label.setBuddy(p_input)
+        self.p_input = p_input
         
         # Forgotten password url
         f_label = QtGui.QLabel(self)
@@ -65,14 +97,15 @@ class HCPLoginWindow(CustomLoginWindow):
         f_label.setObjectName('forgot_pw')
 
         # Remember password check box
-        remember = QtGui.QCheckBox('Remember me', self)
-        remember.setObjectName('remember_me')
-        remember.toggled.connect(self.__on_remember_update)
+        self.chk_remember = QtGui.QCheckBox('Remember me', self)
+        self.chk_remember.setObjectName('remember_me')
+        self.chk_remember.toggled.connect(self.__on_remember_update)
 
         # Invisible mode check box
         invisible = QtGui.QCheckBox('Invisible', self)
         invisible.setObjectName('invisible')
         invisible.toggled.connect(self.__on_invisible_update)
+        self.chk_invisible = invisible
 
         # Login button
         l_button = QtGui.QPushButton("Login", self)
@@ -94,8 +127,8 @@ class HCPLoginWindow(CustomLoginWindow):
         layout.addWidget(p_label, 4, 0, 1, 2, QtCore.Qt.AlignTop)
         layout.addWidget(p_input, 5, 0, 1, 2, QtCore.Qt.AlignTop)
         layout.addWidget(f_label, 6, 0, 1, 1, QtCore.Qt.AlignTop)
-        layout.addWidget(remember, 7, 0, 1, 2, QtCore.Qt.AlignVCenter)
-        layout.addWidget(invisible, 8, 0, 1, 2, QtCore.Qt.AlignVCenter)
+        layout.addWidget(self.chk_remember, 7, 0, 1, 2, QtCore.Qt.AlignVCenter)
+        layout.addWidget(self.chk_invisible, 8, 0, 1, 2, QtCore.Qt.AlignVCenter)
         layout.addWidget(self.l_button, 7, 1, 2, 1, QtCore.Qt.AlignRight)
         layout.setRowMinimumHeight(3, 36)
         layout.setRowMinimumHeight(6, 25)
@@ -107,8 +140,9 @@ class HCPLoginWindow(CustomLoginWindow):
         # Username field > Password field > Remember me box > Log in button
         # u_input > p_input > remember > l_button
         self.setTabOrder(u_input, p_input)
-        self.setTabOrder(p_input, remember)
-        self.setTabOrder(remember, self.l_button)
+        self.setTabOrder(p_input, self.chk_remember)
+        self.setTabOrder(self.chk_remember, self.chk_invisible)
+        self.setTabOrder(self.chk_invisible, self.l_button)
 
         # Focus policies
         u_input.setFocus()
@@ -123,7 +157,10 @@ class HCPLoginWindow(CustomLoginWindow):
                 self.l_button.click()
                 event.accept()
         event.ignore()
- 
+    
+    def __on_close_clicked(self):
+       sys.exit(self.save_settings())
+
     def __on_username_update(self, username):
         if username == "": username = None
         self.username = username
@@ -150,6 +187,12 @@ class HCPLoginWindow(CustomLoginWindow):
         if self.username is None or self.password is None:
             self.l_button.setEnabled(False)
             return 
+
+        # Save the settings before logging in.
+        self.save_settings()
+        
+        # Clear any previous states, disable the button to prevent 'spammy' logins
+        # and set the text to something nice.
         self.error_msg.setText(None)
         self.l_button.setEnabled(False)
         self.l_button.setText("Validating..")

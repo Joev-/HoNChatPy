@@ -22,7 +22,8 @@ class HCPHoNClient(HoNClient):
 
     def login(self, username, password):
         log.info("Logging in..")
-        password = md5(password).hexdigest()
+        if len(password) != 32:
+            password = md5(password).hexdigest()
         try:
             self._login(username, password)
         except MasterServerError, e:
