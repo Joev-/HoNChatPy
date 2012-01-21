@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 import sys, threading, signal, re, time, getpass
-from PySide.QtGui import QApplication
 from hashlib import md5
+from PySide.QtGui import QApplication
+from PySide.QtCore import QTimer
+
 try:
     from lib.honcore.client import HoNClient
     from lib.honcore.exceptions import *
 except ImportError:
     print "HoNCore could not be found in the lib folder, please ensure it is available."
 
-from core import log, events
+from core import log, events, ConnectionManager
 from core.gui import HCPLoginWindow, HCPCoreWindow
 
 class HCPHoNClient(HoNClient):
@@ -33,6 +35,7 @@ class HCPHoNClient(HoNClient):
         return True
 
     def connect(self):
+        log.info("Connecting..")
         try:
             self._chat_connect()
         except ChatServerError, e:
@@ -43,19 +46,29 @@ class HCPHoNClient(HoNClient):
     def logout(self):
         log.info("Logging out...")
         try:
-            self._chat_disconnect()
-        except ChatServerError, e:
-            log.error(e)
-
-        try:
             self._logout()
         except MasterServerError, e:
             log.error(e)
-
+            return False
         self.logged_in = False
+        return True
+    
+    def disconnect(self):
+        log.info("Disconnecting...")
+        try:
+            self._chat_disconnect()
+        except ChatServerError, e:
+            log.error(e)
+            return False
+        return True
 
 def main():
     client = HCPHoNClient()
+    
+    # Temporary client config
+    # Move to self implementation using QSettings later.
+    client._configure(protocol=19)
+
     app = QApplication(sys.argv)
     app.setApplicationName("HoNChatPy")
     #app.setQuitOnLastWindowClosed(True) # May need to change for system tray behaviour
@@ -71,25 +84,12 @@ def main():
             login_window.show()
             app.exec_()
        
-        # The login window gets closed. Check if it was closed because the user logged in
-        # or if it was closed because 
-        if client.is_logged_in:
+        while client.is_logged_in:
             core_window.show()
-        else:
-            sys.exit()
-        
-        sys.exit(app.exec_())
+            client.connect()
+            app.exec_()
      
-def sigint_handler(signum,  frame):
-    """Handles SIGINT signal (<C-c>). Quits program."""
-    if honchatpy.is_logged_in:
-        honchatpy.logout()
-    else:
-        log.info("Quitting...")
-        sys.exit(0)
-
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, sigint_handler)
     log.add_logger(sys.stdout, 'DEBUG', False)
     log.add_logger('honchat_log', 'DEBUG', True)
     main()

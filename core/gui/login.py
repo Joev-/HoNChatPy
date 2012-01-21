@@ -1,5 +1,5 @@
 from PySide import QtCore, QtGui
-from widgets import CustomLoginWindow, URLLabel
+from widgets import CustomLoginWindow, URLLabel 
 from hashlib import md5 
 import sys, time
 
@@ -10,34 +10,61 @@ class HCPLoginWindow(CustomLoginWindow):
         self.client = client
         self.username = None
         self.password = None
+        self.pass_len = None
         self.remember_me = False
         self.invisible = False
         
         self.setup_ui()
         self.load_settings()
 
+        if self.remember_me is True:
+            self.l_button.click()
+
     def load_settings(self):
+        """
+        Settings stored for the login window.
+            * Position      - QPoint object holding the X and Y position of the window. Always saved.
+            * Remember me   - Checkbox which decides if the username, password and invisible information is saved.
+            * Username      - The user's username.
+            * Password      - The sum of a MD5 hash of the user's password. The length of the original password is
+                              also stored, in order to represent the original password when the program is re-opened.
+            * Invisible     - A toggle which allows the user to log in using 'Invisible mode'.
+        TODO: Weird bug, if just remember_me is ticked, it's state won't be loaded correctly.
+              Same if remember_me and invisible is ticked.
+        """
         settings = QtCore.QSettings(QtCore.QSettings.IniFormat, QtCore.QSettings.UserScope, "HoNChatPy")
         # Nice and hackish way to center the window on first run!
         self.move(settings.value("loginwindow/pos", QtCore.QPoint(QtGui.QApplication.desktop().geometry().center() - self.geometry().center())))
-        self.remember_me = settings.value("user/remember", False)
+        self.remember_me = True if settings.value("user/remember", False) == "true" else False
         if self.remember_me is True:
             self.u_input.setText(settings.value("user/username"))
-            self.p_input.setText(settings.value("user/password"))
+            self.p_input.setText('c' * int(settings.value("user/passlen")))
+            self.password = settings.value("user/password")
             self.chk_invisible.setChecked(True if settings.value("user/invisible") == "true" else False)
             self.chk_remember.setChecked(True if settings.value("user/remember") == "true" else False)
 
     def save_settings(self):
         # Ensure the password is hashed
-        if self.password is not None and len(self.password) != 32:
+        # The length check is required to prevent the password being hashed repeatedly.
+        # Not a great method..
+        if self.password != None and len(self.password) != 32:
             self.password = md5(self.password).hexdigest()
 
         settings = QtCore.QSettings(QtCore.QSettings.IniFormat, QtCore.QSettings.UserScope, "HoNChatPy")
         settings.setValue("loginwindow/pos", self.window().pos())
         if self.remember_me is True:
             settings.setValue("user/remember", self.remember_me)
-            settings.setValue("user/username", self.username)
-            settings.setValue("user/password", self.password)
+            if self.username != None:
+                settings.setValue("user/username", self.username)
+            else:
+                settings.remove("user/username")
+            # Only save the hashed password. Hashed passwords WILL be 32 chars long.
+            # S2 prevents users from having a fairly long password, I think...
+            if self.password != None and len(self.password) == 32:
+                settings.setValue("user/password", self.password)
+                settings.setValue("user/passlen", self.pass_len)
+            else:
+                settings.remove("user/password")
             settings.setValue("user/invisible", self.invisible)
         else:
             settings.setValue("user/remember", False)
@@ -97,15 +124,16 @@ class HCPLoginWindow(CustomLoginWindow):
         f_label.setObjectName('forgot_pw')
 
         # Remember password check box
-        self.chk_remember = QtGui.QCheckBox('Remember me', self)
-        self.chk_remember.setObjectName('remember_me')
-        self.chk_remember.toggled.connect(self.__on_remember_update)
+        chk_remember = QtGui.QCheckBox('Remember me', self)
+        chk_remember.setObjectName('remember_me')
+        chk_remember.toggled.connect(self.__on_remember_update)
+        self.chk_remember = chk_remember
 
         # Invisible mode check box
-        invisible = QtGui.QCheckBox('Invisible', self)
-        invisible.setObjectName('invisible')
-        invisible.toggled.connect(self.__on_invisible_update)
-        self.chk_invisible = invisible
+        chk_invisible = QtGui.QCheckBox('Invisible', self)
+        chk_invisible.setObjectName('invisible')
+        chk_invisible.toggled.connect(self.__on_invisible_update)
+        self.chk_invisible = chk_invisible
 
         # Login button
         l_button = QtGui.QPushButton("Login", self)
@@ -127,9 +155,9 @@ class HCPLoginWindow(CustomLoginWindow):
         layout.addWidget(p_label, 4, 0, 1, 2, QtCore.Qt.AlignTop)
         layout.addWidget(p_input, 5, 0, 1, 2, QtCore.Qt.AlignTop)
         layout.addWidget(f_label, 6, 0, 1, 1, QtCore.Qt.AlignTop)
-        layout.addWidget(self.chk_remember, 7, 0, 1, 2, QtCore.Qt.AlignVCenter)
-        layout.addWidget(self.chk_invisible, 8, 0, 1, 2, QtCore.Qt.AlignVCenter)
-        layout.addWidget(self.l_button, 7, 1, 2, 1, QtCore.Qt.AlignRight)
+        layout.addWidget(chk_remember, 7, 0, 1, 2, QtCore.Qt.AlignVCenter)
+        layout.addWidget(chk_invisible, 8, 0, 1, 2, QtCore.Qt.AlignVCenter)
+        layout.addWidget(l_button, 7, 1, 2, 1, QtCore.Qt.AlignRight)
         layout.setRowMinimumHeight(3, 36)
         layout.setRowMinimumHeight(6, 25)
         layout.setRowStretch(9, 100)
@@ -141,13 +169,15 @@ class HCPLoginWindow(CustomLoginWindow):
         # u_input > p_input > remember > l_button
         self.setTabOrder(u_input, p_input)
         self.setTabOrder(p_input, self.chk_remember)
-        self.setTabOrder(self.chk_remember, self.chk_invisible)
-        self.setTabOrder(self.chk_invisible, self.l_button)
+        self.setTabOrder(chk_remember, chk_invisible)
+        self.setTabOrder(chk_invisible, l_button)
 
         # Focus policies
         u_input.setFocus()
         b_close.setFocusPolicy(QtCore.Qt.NoFocus)
         f_label.setFocusPolicy(QtCore.Qt.ClickFocus)
+        chk_remember.setFocusPolicy(QtCore.Qt.TabFocus)
+        chk_invisible.setFocusPolicy(QtCore.Qt.TabFocus)
 
     def keyPressEvent(self, event):
         # From QDialog source code.
@@ -169,6 +199,8 @@ class HCPLoginWindow(CustomLoginWindow):
     def __on_password_update(self, password):
         if password == "": password = None
         self.password = password
+        if password != None:
+            self.pass_len = len(password)
         self.__update_login_button()
     
     def __on_remember_update(self, remember):
@@ -184,6 +216,16 @@ class HCPLoginWindow(CustomLoginWindow):
             self.l_button.setEnabled(False)
 
     def __login(self):
+        """
+        Process of execution:
+            Shouldn't happen, but ensure a username and password exist.
+            Save the settings for certain things.
+            Clear the error message, disable the button (prevent post-clicks) and change the text to something nicer.
+            Create login thread and process the login.
+            Display the loading cursor until it has ended
+            If the user is not logged in when the thread ended, then something went wrong.
+            if the user is logged in, then proceed.
+        """
         if self.username is None or self.password is None:
             self.l_button.setEnabled(False)
             return 
@@ -197,12 +239,13 @@ class HCPLoginWindow(CustomLoginWindow):
         self.l_button.setEnabled(False)
         self.l_button.setText("Validating..")
         if self.client.login(self.username, self.password):
+            # If the user logs out later, their details will still be set, they need to be cleared.
+            # TODO: Do that.
+            self.l_button.setEnabled(True)
+            self.l_button.setText("Login")
             self.close()
         else:
             self.error_msg.setText("Incorrect username or password")
             self.l_button.setEnabled(True)
             self.l_button.setText("Login")
-
-    def __load_settings(self):
-        pass
 
