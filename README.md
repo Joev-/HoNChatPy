@@ -8,8 +8,8 @@ fully free to use it as they please.
 
 ## Requirements
 
-[PySide](http://www.pyside.org) - For the QT bindings.
-[HoNCore](http://github.com/Joev-/HoNCore) - For connectivity to the chat server.
+* [PySide](http://www.pyside.org) - For the QT bindings.
+* [HoNCore](http://github.com/Joev-/HoNCore) - For connectivity to the chat server.
 
 ## Usage
 
